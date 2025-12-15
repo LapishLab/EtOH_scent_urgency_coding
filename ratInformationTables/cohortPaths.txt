@@ -1,0 +1,11 @@
+WistarUrgency:
+
+IAP_pat = 'C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\052224_11425_WistarUrgency\IAP\IAP_data.xlsx'
+
+Prat_Urgency:
+
+IAP_pat = "C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\072125_121225_Prat_Urgency\IAP\072125_IAP_data.xlsx"
+
+ratSheet = 'animalInfo'
+
+
