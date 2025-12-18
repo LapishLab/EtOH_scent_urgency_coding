@@ -1,0 +1,140 @@
+%% Pull data together where the groups are counterbalanced 2x2
+
+%call the different groups of rats 
+Control_group = ratsInfo.sex == "F" & ratsInfo.treatment == "Control";
+EtOH_group1 = ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH" & ratsInfo.DD_scent_counterbalanced_identifier == 1;
+EtOH_group2 = ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH" & ratsInfo.DD_scent_counterbalanced_identifier == 2;
+
+data = allDDiVals_test;
+
+%Create arrays to store the data from the grouped rats
+%organize in 3D
+%find the mean across the trials for each rat
+%Group 1: EtOH-exposed animals that had the EtOH scent
+EtOH_scent_iVals = cat(3, [data{3}(EtOH_group1, :); data{5}(EtOH_group2, :)], [data{10}(EtOH_group1, :); data{8}(EtOH_group2, :)]);
+EtOH_scent_ratIDs = [[ratsInfo.ratID(EtOH_group1); ratsInfo.ratID(EtOH_group2)] [ratsInfo.ratID(EtOH_group1);ratsInfo.ratID(EtOH_group2)]];
+if EtOH_scent_ratIDs ~= EtOH_scent_ratIDs
+    warning("EtOH Scent rats not correctly counterbalanced")
+end; 
+EtOH_scent_iVals_mean = mean(EtOH_scent_iVals, 3);
+
+%Group 2: EtOH-exposed animals that had the control scent 
+Control_scent_iVals = cat(3, [data{3}(EtOH_group2, :); data{5}(EtOH_group1, :)], [data{10}(EtOH_group2, :); data{8}(EtOH_group1, :)]);
+Control_scent_ratIDs = [[ratsInfo.ratID(EtOH_group2); ratsInfo.ratID(EtOH_group1)] [ratsInfo.ratID(EtOH_group2);ratsInfo.ratID(EtOH_group1)]];
+if Control_scent_ratIDs ~= Control_scent_ratIDs
+    warning("Control Scent rats not correctly counterbalanced")
+end; 
+Control_scent_iVals_mean = mean(Control_scent_iVals, 3);
+
+%Group 3: Control animals that only had the control scent 
+Control_group_iVals = cat(3, [data{3}(Control_group,:)], [data{5}(Control_group, :)], [data{8}(Control_group, :)], [data{10}(Control_group,:)]);
+Control_group_ratIDs = ratsInfo.ratID(Control_group);
+Control_group_iVals_mean = mean(Control_group_iVals, 3);
+
+%Plot the data 
+trials = [1:30];
+
+fig = figure();
+plotLPError(trials, EtOH_scent_iVals_mean, 'mn', 'o-', 'Color', 'red');
+hold on;
+plotLPError(trials, Control_scent_iVals_mean, 'mn', 'x-', 'Color', 'blue');
+plotLPError(trials, Control_group_iVals_mean, 'mn', '+-', 'Color', 'black');
+legend(["EtOH" "Water" "Control"])
+ylim([0 6])
+title("Females Scent DD")
+
+%% Organize data where the groups are counterbalanced 3x3: Prefeeding Experiment %%
+
+%% Group numbers for prefeeding experiment
+%group numbers that had each treatment on each day. Each column is a different day.
+chow = [3 1 2];
+sucrose = [1 2 3];
+bowl = [2 3 1];
+
+%Create arrays to hold the raw data as well as the ratIDs 
+chowDataEtOH = [];
+chowDataWater = [];
+chowData_ratIDs = {};
+sucroseData = [];
+sucroseData_ratIDs = {};
+bowlData = [];
+bowlData_ratIDs = {};
+
+%Days where they had the experiment 
+days = [18:20];
+
+data = allDDiVals;
+
+%Group the data from each group across days together. 
+for i = 1:size(days,2)
+    chowDataEtOH = [chowDataEtOH; data{days(i)}(ratsInfo.prefeeding_group == chow(i) & ratsInfo.sex == "M" & ratsInfo.treatment == "EtOH", :)];
+    chowDataWater = [chowDataWater; data{days(i)}(ratsInfo.prefeeding_group == chow(i) & ratsInfo.sex == "M" & ratsInfo.treatment == "Control", :)];
+    chowData_ratIDs{i} = ratsInfo.ratID(ratsInfo.prefeeding_group == chow(i) & ratsInfo.sex == "M");
+    sucroseData = [sucroseData; data{days(i)}(ratsInfo.prefeeding_group == sucrose(i) & ratsInfo.sex == "M",:)];
+    sucroseData_ratIDs{i} = ratsInfo.ratID(ratsInfo.prefeeding_group == sucrose(i) & ratsInfo.sex == "M");
+    bowlData = [bowlData; data{days(i)}(ratsInfo.prefeeding_group == bowl(i) & ratsInfo.sex == "M",:)];
+    bowlData_ratIDs{i} = ratsInfo.ratID(ratsInfo.prefeeding_group == bowl(i) & ratsInfo.sex == "M");
+end; 
+
+%% Organize data where the groups are counterbalanced 3x3: USV Experiment %%
+
+%% Group numbers for USV playback experiment 
+%group numbers that had each treatment on each day. Each column is a different day.
+%multiple groups on each day
+
+noise_groups = [[1; 7; 9; NaN] [2; 4; 8; 10] [3; 5; 6; NaN]];
+happy_groups = [[3; 5; 6; NaN] [1; 7; 9; NaN] [2; 4; 8; 10]];
+sad_groups = [[2; 4; 8; 10] [3; 5; 6; NaN] [1; 7; 9; NaN]];
+
+%compile rat indexes of all rats that got the exposure each day regardless
+%of group number 
+%initialize arrays the size of rats by day 
+noise_ratIndex = zeros(size(ratsInfo,1), 3);
+happy_ratIndex = zeros(size(ratsInfo,1), 3);
+sad_ratIndex = zeros(size(ratsInfo,1), 3);
+
+sadData_ratIDs = zeros(size(ratsInfo,1), 3);
+happyData_ratIDs = zeros(size(ratsInfo,1), 3);
+noiseData_ratIDs = zeros(size(ratsInfo,1), 3);
+
+%initialize matrices to hold the iValue across trials data 
+noiseData = [];
+happyData = [];
+sadData = [];
+
+%Days where they had the experiment 
+days = [22:24];
+data = allDDiVals_test;
+
+%create matrixes of rat indexes that received the certain exposure each of
+%the 3 days 
+for day = 1: size(days, 2)
+    for group = 1:size(noise_groups, 1)
+        noise_ratIndex(:,day) = sum([noise_ratIndex(:,day) (ratsInfo.USV_playback_group == noise_groups(group, day) & ratsInfo.sex == "F")], 2);
+        happy_ratIndex(:,day) = sum([happy_ratIndex(:,day) (ratsInfo.USV_playback_group == happy_groups(group, day) & ratsInfo.sex == "F")], 2);
+        sad_ratIndex(:,day) = sum([sad_ratIndex(:,day) (ratsInfo.USV_playback_group == sad_groups(group, day) & ratsInfo.sex == "F")], 2);
+    end
+    noiseData_ratIDs(1:sum(noise_ratIndex(:,day)), day) = ratsInfo.ratID(logical(noise_ratIndex(:,day)));
+    happyData_ratIDs(1:sum(happy_ratIndex(:,day)), day) = ratsInfo.ratID(logical(happy_ratIndex(:,day)));
+    sadData_ratIDs(1:sum(sad_ratIndex(:,day)), day) = ratsInfo.ratID(logical(sad_ratIndex(:,day)));
+
+    noiseData = [noiseData; data{days(day)}(logical(noise_ratIndex(:,day)),:)];
+    happyData = [happyData; data{days(day)}(logical(happy_ratIndex(:,day)),:)];
+    sadData = [sadData; data{days(day)}(logical(sad_ratIndex(:,day)),:)];
+end
+
+
+
+%Plot the data 
+trials = [1:30]
+
+fig = figure()
+plotLPError(trials, noiseData, 'mn', 'o-', 'Color', 'red')
+hold on;
+plotLPError(trials, happyData, 'mn', 'x-', 'Color', 'blue')
+plotLPError(trials, sadData, 'mn', '+-', 'Color', 'black')
+title("USV Playback Female Water Consumers")
+legend(["Noise" "Happy" "Sad"])
+ylim([0 6])
+hold off;
+
