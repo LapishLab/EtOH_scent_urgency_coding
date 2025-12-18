@@ -1,9 +1,9 @@
 %% Pull data together where the groups are counterbalanced 2x2 %%
 
 %call the different groups of rats 
-Control_group = ratsInfo.sex == "M" & ratsInfo.treatment == "Control";
-EtOH_group1 = ratsInfo.sex == "M" & ratsInfo.treatment == "EtOH" & ratsInfo.DD_scent_counterbalanced_identifier == 1;
-EtOH_group2 = ratsInfo.sex == "M" & ratsInfo.treatment == "EtOH" & ratsInfo.DD_scent_counterbalanced_identifier == 2;
+Control_group = ratsInfo.sex == "F" & ratsInfo.treatment == "Control";
+EtOH_group1 = ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH" & ratsInfo.DD_scent_counterbalanced_identifier == 1;
+EtOH_group2 = ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH" & ratsInfo.DD_scent_counterbalanced_identifier == 2;
 
 data = allDDiVals_test;
 
@@ -48,10 +48,10 @@ dayEffects = figure()
 plotLPError(trials, data{3}(EtOH_group1, :), 'mn', 'o-', 'Color', 'red')
 hold on;
 plotLPError(trials, data{3}(EtOH_group2, :), 'mn', 'x-', 'Color', 'blue')
-plotLPError(trials, data{2}(logical(EtOH_group1 + EtOH_group2), :), 'mn', '+-', 'Color', 'black')
-legend(["EtOH" "Water" "Day Before"])
+plotLPError(trials, data{2}(, :), 'mn', '+-', 'Color', 'black')
+legend(["EtOH" "Water" "Control"])
 ylim([0 6])
-title("First Day of Scent DD: Males")
+title("First Day of Scent DD: Females")
 hold off; 
 
 %% Organize data where the groups are counterbalanced 3x3: Prefeeding Experiment %%
@@ -87,7 +87,6 @@ for i = 1:size(days,2)
     bowlData_ratIDs{i} = ratsInfo.ratID(ratsInfo.prefeeding_group == bowl(i) & ratsInfo.sex == "M");
 end; 
 
-
 %% Organize data where the groups are counterbalanced 3x3: USV Experiment %%
 
 %% Group numbers for USV playback experiment 
@@ -122,9 +121,9 @@ data = allDDiVals_test;
 %the 3 days 
 for day = 1: size(days, 2)
     for group = 1:size(noise_groups, 1)
-        noise_ratIndex(:,day) = sum([noise_ratIndex(:,day) (ratsInfo.USV_playback_group == noise_groups(group, day) & ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH")], 2);
-        happy_ratIndex(:,day) = sum([happy_ratIndex(:,day) (ratsInfo.USV_playback_group == happy_groups(group, day) & ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH")], 2);
-        sad_ratIndex(:,day) = sum([sad_ratIndex(:,day) (ratsInfo.USV_playback_group == sad_groups(group, day) & ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH")], 2);
+        noise_ratIndex(:,day) = sum([noise_ratIndex(:,day) (ratsInfo.USV_playback_group == noise_groups(group, day) & ratsInfo.sex == "F")], 2);
+        happy_ratIndex(:,day) = sum([happy_ratIndex(:,day) (ratsInfo.USV_playback_group == happy_groups(group, day) & ratsInfo.sex == "F")], 2);
+        sad_ratIndex(:,day) = sum([sad_ratIndex(:,day) (ratsInfo.USV_playback_group == sad_groups(group, day) & ratsInfo.sex == "F")], 2);
     end
     noiseData_ratIDs(1:sum(noise_ratIndex(:,day)), day) = ratsInfo.ratID(logical(noise_ratIndex(:,day)));
     happyData_ratIDs(1:sum(happy_ratIndex(:,day)), day) = ratsInfo.ratID(logical(happy_ratIndex(:,day)));
@@ -148,13 +147,7 @@ legend(["Noise" "Happy" "Sad"])
 ylim([0 6])
 hold off;
 
-%plot the effects of the first day 
-dayEffects = figure()
-plotLPError(trials, data{days(1)}(logical(noise_ratIndex(:,1)), :), 'mn', 'o-', 'Color', 'black')
-hold on;
-plotLPError(trials, data{days(1)}(logical(happy_ratIndex(:,1)), :), 'mn', 'x-', 'Color', 'red')
-plotLPError(trials, data{days(1)}(logical(sad_ratIndex(:,1)), :), 'mn', '+-', 'Color', 'blue')
-title("First Day USV Playback: Female EtOH Consumers")
-legend(["Noise" "Happy" "Sad"])
-ylim([0 6])
-hold off;
+%% Day Effects %%
+
+%% DD Scent 
+
