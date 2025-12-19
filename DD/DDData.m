@@ -53,12 +53,10 @@ for day = 1:length(dayNumbers);
     day_dates(day,:) = {dayNumbers(day), dates(1)};
 
 
-    %create a for loop that finds the location of rats that died or were
-    %discarded throughout the testing and removes them for each day that
-    %they are present 
+    %create a for loop that finds the location of and removes rats who didn't make
+    %testing criteria
     % can comment out if you don't need this 
     for rat = 1:size(allData{day},2);
-        %removes cell with the dead/discarded rat
         %if allData{day}{rat}.subjectNumber == 53 | allData{day}{rat}.subjectNumber == 17| allData{day}{rat}.subjectNumber == 32|allData{day}{rat}.subjectNumber == 47;
             %allData{day}{rat} = [];
         %end;
