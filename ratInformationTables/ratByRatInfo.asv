@@ -1,0 +1,26 @@
+function [ratsInfo] = ratByRatInfo(IAP_pat, ratSheet)
+%% Organize rat by rat Identifying Information using the IAP Sheet
+% Contains information about each rat so that I can use it for
+% indexing and organizing graphs and data later. 
+% input: path to excel file with rat information (can contain multiple), specific sheet in this
+% file 
+% ouptut: a variable that contains columns of classifying information for
+% each rat row 
+
+%import the rat by rat information for the first cohort
+ratsInfo_all = readtable(IAP_pat(1), 'Sheet', ratSheet);
+%remove any excess i
+[max_ratID, max_index] = max(ratsInfo_all.ratID);
+ratsInfo_all([max_index+1:end], :) = [];
+
+%import rat by rat information for the following cohorts, matching the data
+%in the table by shared table column headers
+for i = 1:size(IAP_pat, 1) 
+    ratsInfo_next = readtable(IAP_pat(i+1), 'Sheet', ratSheet);
+    %remove any extra information beyond the edges of the table 
+    [max_ratID, max_index] = max(ratsInfo_next.ratID);
+    ratsInfo_all([max_index+1:end], :) = [];
+    T_out = outerjoin(ratsInfo_all, ratsInfo_next, 'MergyKeys', true) 
+end; 
+
+
