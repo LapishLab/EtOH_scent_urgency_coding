@@ -1,4 +1,4 @@
-function [allData, totLickMtx, lickTmSerMtx, sideMtx, subNumMtx, checkLicks] = anaRap(dir_path, days, maxFiles, opts)
+function out = anaRap(dir_path, days, maxFiles, opts)
 %% Get all of the RAP data and plot number of licks and timecourse of licks
 
 %add description of arguments
@@ -6,13 +6,13 @@ arguments
     dir_path {mustBeText} % path to folder containing med associates files
     days {mustBeInteger} %number of experiment days
     maxFiles {mustBeInteger} %max number of MedPC files in each experiment day 
-    opts.fix_file (1,1) logical = false %false automatically assumes you don't need to fix a medPC file, true will run the fixMedPCFile function
-    opts.allData (1,1) logical = true %true automatically includes the allData variable in the output variable, false doesn't include it
-    opts.totLickMtx (1,1) logical = true
-    opts.lickTmSerMtx (1,1) logical = true
-    opts.sideMtx (1,1) logical = true
-    opts.subNumMtx (1,1) logical = true
-    opts.checkLicks (1,1) logical = true
+    opts.fix_file logical = false %false automatically assumes you don't need to fix a medPC file, true will run the fixMedPCFile function
+    opts.allData logical = true %true automatically includes the allData variable in the output variable, false doesn't include it
+    opts.totLickMtx logical = true
+    opts.lickTmSerMtx logical = true
+    opts.sideMtx logical = true
+    opts.subNumMtx logical = true
+    opts.checkLicks logical = true
 end; 
 
 %% Import the RAP files
@@ -39,9 +39,12 @@ for i = 1:days;
     %fixes the medPC file for 18 so that all the correct data from 18 is in
     %the 18 16 file
     % comment this area out if you don't need it! 
-    %if i == 1 && opts.fix_file == true
-     %   [data] = fixRAPMedPCFile(data);
-    %end;
+    if i == 1 && opts.fix_file == true
+       [data] = fixRAPMedPCFile(data);
+    end; 
+    %check that all the files for each day are from the same date
+    [dates] = matchingFileDates(data,importer = "BlockArray");
+
     % cycle through the data file and add the data into the correct
     % row/positions in the allData matrix. This is needed because the days
     % may contain different numbers of files 
@@ -181,6 +184,6 @@ out = {};
 %on the input information 
 for i = 1:size(variables,2)
     if opts.(variable_names(i)) == true
-        out{i} = variables(i);
+        out{size(out,2)+1} = variables{i};
     end
 end

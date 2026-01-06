@@ -34,20 +34,9 @@ for day = 1:length(dayNumbers);
     %path name to the folder with all the MedPC files
     fullPath = [pat '\day' num2str(dayNumbers(day)) '\'];
     %import all of the files for each rat on each day
-    allData{day} = importMA_Batch(fullPath, output_path = "C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\072125_121225_Prat_Urgency\Codes\variables");
-    
-    %check the dates to make sure that all of the files in one allData file
-    %are aligning with each other
-
-    %save all the dates for a day to a single vector
-    dates = [];
-    for i = 1:size(allData{day},1)
-        dates = [dates;string(allData{day}{i}.Start_Date)];
-    end; 
-    %compare all the dates to each other 
-    if ~all(dates == dates(1))
-        warning("Not all MedPC files are from the same date")
-    end; 
+    dayData = importMA_Batch(fullPath, output_path = "C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\072125_121225_Prat_Urgency\Codes\variables");
+    dates = matchingFileDates(dayData);
+    allData{day} = dayData;
     %save the day and corresponding date to an overall vector so I can
     %check that the days and dates are aligning correctly 
     day_dates(day,:) = {dayNumbers(day), dates(1)};
