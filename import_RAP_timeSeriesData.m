@@ -72,33 +72,6 @@ end
 
 RAP_lickTmSerMtx = [RAP_start_lickTmSerMtx RAP_renewal_lickTmSerMtx];
 
-%% Align all binned data
-% find minimum and maximum licking time points 
-mnMxLickTm = minmax(cell2mat(cellfun(@(x) cell2mat(x'), lickTmSerMtx, 'UniformOutput',false)));
-% create vector starting with 0 and going to the highest time series lick
-% point. Increment up by 60.  
-xA = [0:60:mnMxLickTm(2)];
-% i is the day by cycling through lick time series matrix
-for i=1:size(lickTmSerMtx,2);
-    hld = lickTmSerMtx{i};
-    binLick(:,i) = cellfun(@(x) cumsum(histc(x,xA)), hld, 'UniformOutput',false);
-end;
-
-%% Plot the binned data. 
-for i = 1:size(binLick,2);
-    subplot(1,size(binLick,2),i);
-    hld = cell2mat(binLick(:,i));
-    %kW = find(subNumMtx(:,i)<=16);
-    %kE = find(subNumMtx(:,i)>16);
-    kW = [1:16]
-    kE = [17:size(binLick,1)]
-%     plot(mean(hld(kW,:)),'b.-'); hold on;
-%     plot(mean(hld(kE,:)),'r.-'); hold on;
-    errorbar(xA,mean(hld(kW,:)),std(hld(kW,:)./sqrt(length(kW))),'bo-'); hold on;
-    errorbar(xA,mean(hld(kE,:)),std(hld(kE,:)./sqrt(length(kE))),'ro-'); hold on;
-%     ylabel('mean licks/60 sec')
-    ylabel('Cumlative number of licks')
-    xlabel('Time (min)')
-    title(['Day ' num2str(i)])
-    ylim([0 800])
-end;
+%% Save Data %%
+save("C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\EtOH_scent_urgency_coding\variables\RAP_lickTmSerMtx.mat", "RAP_lickTmSerMtx")
+save("C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\EtOH_scent_urgency_coding\variables\RAP_totalLicks.mat", "RAP_totalLicks")

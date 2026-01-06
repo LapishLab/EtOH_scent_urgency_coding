@@ -43,7 +43,7 @@ for i = 1:days;
        [data] = fixRAPMedPCFile(data);
     end; 
     %check that all the files for each day are from the same date
-    [dates] = matchingFileDates(data,importer = "BlockArray");
+    dates = matchingFileDates(data,importer = "BlockArray");
 
     % cycle through the data file and add the data into the correct
     % row/positions in the allData matrix. This is needed because the days

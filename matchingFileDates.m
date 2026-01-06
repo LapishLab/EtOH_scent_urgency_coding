@@ -3,13 +3,14 @@ function [dates] = matchingFileDates(dayData,opts)
 %check that the all the dates for the medPC files in a day are the same
 
 arguments
-    dayData {mustBeText} %medPC files for a single day 
+    dayData cell %medPC files for a single day 
     opts.importer {mustBeText} = "" %specify which importer you are using to 
                                     %know how to pull out the data information. 
                                     %empty assumes the importer was David's
                                     %which doesn't have a header section 
 end 
 
+%% 
 %create variable to hold all the dates
 dates = [];
 
