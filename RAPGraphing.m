@@ -1,34 +1,58 @@
-%% Creating Graphs of RAP Variables
+%% Creating Graphs of RAP Data
 % this code graphs RAP consumption in different ways. Separate sections
 % will show specifics
 
 
 
+%% Correlation Check with Licks and Consumption %%
+days = [1 3 5 6 8 10 11 13]
 
+group1 = ratsInfo.strain == "Wistar" & ratsInfo.treatment == "Control"
+group2 = ratsInfo.strain == "Wistar" & ratsInfo.treatment == "EtOH"
+group3 = ratsInfo.strain == "P" & ratsInfo.treatment == "Control"
+group4 = ratsInfo.strain == "P" & ratsInfo.treatment == "EtOH"
 
-%% !!LinePlot and Swarmchart of Licks across days. Split by Sex
-% need variable totLickMtx from anaRAP. Contains total licks in each cell
-% with days on the x and rats on the y. Is already in order of increasing
-% subject number. Remember to remove the rats that are out from the
-% totLickMtx before running 
-
-%split total number of licks up sex. Only use the EtOH consumers and days
-%where EtOH was consumed in ogRAP
-RAPtotLicksM = totLickMtx((ratsInfo.Trtm == "EtOH" & ratsInfo.Sex == "M"),:);
-RAPtotLicksF = totLickMtx((ratsInfo.Trtm == "EtOH" & ratsInfo.Sex == "F"),:);
-
-%create the line plot. Two separate lines for males and females. Days on x
-%axis and licks on the y-axis
-fig1 = figure()
-f = plotZscLPError([1:10], RAPtotLicksF, "Mn", 'o-', 'Color', 'red');
+%graph
+w = scatter(RAP_totalLicks(group2,days), table2array(RAP_all(group2, days)),36, 'r', 'filled')
 hold on;
-m = plotZscLPError([1:10], RAPtotLicksM, "Mn", 'x-', 'Color', 'blue');
-xticks([1:10]); xlabel("Days"); ylabel("Mean Total Licks"); %ylim([-1.5 1.5]);
+p = scatter(RAP_totalLicks(group4,days), table2array(RAP_all(group4, days)),36, 'k', 'filled')
+title("EtOH Consumers")
+legend([w(1) p(1)], {"Wistars","Ps"})
+xlabel("Licks")
+ylabel("g/kg Consumption")
+hold off; 
+
+
+%% Line Plot of Consumption Across days %%
+% can be z-scored
+
+%specify data to graph. If using consumption, you have to convert the table
+%to an array
+data = RAP_totalLicks;
+days = [1:14];
+
+%choose which groups to graph together by finding index in ratsInfo
+group1 = data((ratsInfo.strain == "P" & ratsInfo.treatment == "Control" & ratsInfo.sex == "M"),:);
+group2 = data((ratsInfo.strain == "P" & ratsInfo.treatment == "Control" & ratsInfo.sex == "F"),:);
+group3 = data((ratsInfo.strain == "P" & ratsInfo.treatment == "EtOH" & ratsInfo.sex == "M"), :);
+group4 = data((ratsInfo.strain == "P" & ratsInfo.treatment == "EtOH" & ratsInfo.sex == "F"), :);
+
+%create the line plot
+fig1 = figure()
+f = plotZscLPError(days, group1(:, days), "mean", 'o-');
+hold on;
+m = plotZscLPError(days, group2(:, days), "mean", 'o-');
+m = plotZscLPError(days, group3(:, days), "mean", 'x-');
+m = plotZscLPError(days, group4(:, days), "mean", 'x-');
+
+xticks([1:14]); xlabel("Days"); ylabel("Standard Deviations"); %ylim([-1.5 1.5]);
 yline(0, '--')
-title("EtOH Consumers, AllDays: RAP Cons in Licks Across Days");
-legend("Females", "Males");
+title("RAP Licks across all days for Ps");
+legend("Control Males", "Control Females", "EtOH Males", "EtOH Females");
+xline(10.5, ':k', "Renewal Start");
 hold off;
 
+%% swarmchart 
 %create a swarmchart of the data. Females are red and males are blue 
 fig2 = figure()
 f = plotSwarm([1:6], RAPtotLicksF, 'o', 'red', 'DisplayName', 'Female')
@@ -88,49 +112,6 @@ lgd = legend("Frontloader", "NonFrontLoader", "Control")
 lgd.Layout.Tile = 'east';
 lgd.FontSize = 14
 
-%% export data for prism graphing
-
-%Calcutating totLickData
-%first align all of the data into matching bin sizes. Essentially takes
-%count of how many licks are in each bin of 60 seconds 
-% find minimum and maximum licking time points 
-mnMxLickTm = minmax(cell2mat(cellfun(@(x) cell2mat(x'), lickTmSerMtx, 'UniformOutput',false)));
-% create vector starting with 0 and going to the highest time series lick
-% point. Increment up by 60.  
-xA = [0:60:mnMxLickTm(2)];
-%pull out a specific group
-group = ratsInfo.Sex == "F" & ratsInfo.Trtm == "EtOH"
-% i is the day by cycling through lick time series matrix
-for i=1:size(lickTmSerMtx,2);
-    %pull out the data for each day 
-    hld = lickTmSerMtx{i}(group);
-    %calculates number of licks in each time bin and cumulatively adds the
-    %counts on top of each other as the time increases. binLick has rats as
-    %rows and days as columns
-    binLick(:,i) = cellfun(@(x) cumsum(histc(x,xA)), hld, 'UniformOutput',false);
-end;
-
-%make sure that the binLick variable starts with a 0 and can cut out the
-%repeating number at the end
-for i = 1:size(binLick,1);
-    for m = 1:size(binLick,2);
-        binLick{i,m} = [0 binLick{i,m}([1:end-1])];
-    end;
-end; 
-
-
-
-%check to see if the last two numbers of each lick binned vector always
-%match each other (they do) 
-a = 0
-for i = 1:size(binLick,1);
-    for m = 1:size(binLick,2);
-        ends = binLick{i,m}([end-1:end])
-        equal = ends(1) ~= ends(2)
-        a = a + equal
-    end;
-end;
-
 %% Align all binned data
 % find minimum and maximum licking time points 
 mnMxLickTm = minmax(cell2mat(cellfun(@(x) cell2mat(x'), RAP_lickTmSerMtx, 'UniformOutput',false)));
@@ -149,10 +130,10 @@ end;
 days = [1:10];
 
 %groups you want to graph together 
-group1 = ratsInfo.strain == "Wistar" & ratsInfo.sex == "M" & ratsInfo.treatment == "EtOH";
-group2 = ratsInfo.strain == "Wistar" & ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH";
-group3 = ratsInfo.strain == "P" & ratsInfo.sex == "M" & ratsInfo.treatment == "EtOH";
-group4 = ratsInfo.strain == "P" & ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH";
+%group1 = ratsInfo.strain == "P" & ratsInfo.sex == "M" & ratsInfo.treatment == "EtOH";
+%group2 = ratsInfo.strain == "P" & ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH";
+group3 = ratsInfo.strain == "P" & ratsInfo.sex == "M" & ratsInfo.treatment == "Control";
+group4 = ratsInfo.strain == "P" & ratsInfo.sex == "F" & ratsInfo.treatment == "Control";
 
 %initialize graph
 fig = tiledlayout(1,10)
@@ -160,22 +141,22 @@ fig = tiledlayout(1,10)
 %graph cumulative licks per minute for each day of RAP
 for i = 1:numel(days)
     nexttile
-    plotLPError([1:62],cell2mat(binLick(group1,i)), "mn", 'o-');
+    %plotLPError([1:62],cell2mat(binLick(group1,i)), "mn", 'o-');
     hold on; 
-    plotLPError([1:62],cell2mat(binLick(group2,i)), "mn", 'o-');
+    %plotLPError([1:62],cell2mat(binLick(group2,i)), "mn", 'o-');
     plotLPError([1:62],cell2mat(binLick(group3,i)), "mn", 'x-');
     plotLPError([1:62],cell2mat(binLick(group4,i)), "mn", 'x-');
     title(['Day ' num2str(i)]);
-    ylim([0 1500])
+    ylim([0 300])
 end; 
 
-fig.Title.String = "RAP Cumulative Licks over Time"
+fig.Title.String = "P Control RAP Cumulative Licks over Time"
 fig.Title.FontSize = 18
 fig.XLabel.String = "Time (min)"
 fig.YLabel.String = "Cumulative Licks"
 fig.YLabel.FontSize = 18
 fig.XLabel.FontSize = 18
-lgd = legend("Wistar Male", "Wistar Female", "P Male", "P Female");
+lgd = legend("Control Male", "Control Female");
 
 
 %% Plot the binned data. 

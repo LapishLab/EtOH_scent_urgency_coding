@@ -1,0 +1,48 @@
+function [rowData] = fixRAPMedPCFile(data)
+
+%% Fix a MedPC file with the wrong data in it
+% Rat 18 had to be run again due to technical issues. This file
+% transfers the data from the correct file (rat 18) into the shared file
+% (18_16) that contains the correct data for rat 16
+
+%for loop that finds the positions of the files and reassigns them to a new
+%variable 
+for m = 1:size(data,2)
+    %check if the subject numbers in the file contain 18 
+    subjectNumber_fix = contains(string(data{1,m}.subjectNumber), "18");
+    %add data for only 18 to a new variable 
+    if sum(subjectNumber_fix) == 1 & sum(contains(string(data{1,m}.subjectNumber), "16")) == 0;
+        eighteen = data{1,m};
+        location_eighteen = m
+    %add data with 18_16 to a new variable 
+    elseif sum(subjectNumber_fix) == 1 & sum(contains(string(data{1,m}.subjectNumber), "16")) == 1;
+        eighteen_sixteen = data{1,m};
+        location_eighteen_sixteen = m 
+    end
+end;
+
+
+%Replace arrays in 18_16 with arrays in 18 as the 18 file reflects
+%the full running of 18 
+%Replace A (number of left licks)
+
+eighteen_sixteen.A = eighteen.A
+%Replace E (List of Left lick times in seconds)
+eighteen_sixteen.E = eighteen.E
+%Replace the left three positions in J (list of beam state
+%transition counters) 
+eighteen_sixteen.J(1:3) = eighteen.J(1:3)
+%Replace P (Beam 1 Breaks), Q (Beam 2 Breaks), and R (Beam 3
+%Breaks)
+eighteen_sixteen.P = eighteen.P
+eighteen_sixteen.Q = eighteen.Q
+eighteen_sixteen.R = eighteen.R
+
+%Add the fixed 18_16 file back to the original position of the 18_16
+%structure in the allData cell array
+data(location_eighteen_sixteen) = eighteen_sixteen
+
+%Remove the 18 file from the allData cell array 
+data(pos) = []
+
+
