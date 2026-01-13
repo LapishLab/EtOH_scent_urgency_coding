@@ -116,13 +116,14 @@ lgd.FontSize = 14
 % find minimum and maximum licking time points 
 mnMxLickTm = minmax(cell2mat(cellfun(@(x) cell2mat(x'), RAP_lickTmSerMtx, 'UniformOutput',false)));
 % create vector starting with 0 and going to the highest time series lick
-% point. Increment up by 60.  
-xA = [0:60:mnMxLickTm(2)];
-% i is the day by cycling through lick time series matrix
-for i=1:size(RAP_lickTmSerMtx,2);
+% point. Increment up by 60 for minutes or by 1 for seconds.  
+xA = [0:1:mnMxLickTm(2)];
+% i is the day by cycling through lick time series matrix. Cumulative licks
+% across the time series will be calculated for each rat on each day 
+for i=1:size(RAP_lickTmSerMtx,2)
     hld = RAP_lickTmSerMtx{i};
-    binLick(:,i) = cellfun(@(x) [0 cumsum(histc(x,xA))], hld, 'UniformOutput',false);
-end;
+    binLick(:,i) = cellfun(@(x) cumsum(histcounts(x,xA)), hld, 'UniformOutput',false);
+end
 
 %% Plot the binned data
 
