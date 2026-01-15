@@ -73,11 +73,11 @@ end;
 %metabolic rate below: 
 dname = pwd; 
 cd ([dname]); %go to the folder where Detect_Frontloading.m is saved
-group = ratsInfo.treatment == "EtOH"; %determine which animals you want to look at. Probably ethanol or water consumers 
-Dataset = consumptionOverTime{3}(group, :)'; %call your data matrix here. Individual subjects on columns, data (not cumulative) over time on rows
-Dir = 'C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\graphs\frontloading\day3'; %enter the name of the folder where you want your results to be saved. Must be a char vector, not a string
+group = ratsInfo.treatment == "EtOH" %determine which animals you want to look at. Probably ethanol or water consumers 
+Dataset = consumptionOverTime{1}(group, :)'; %call your data matrix here. Individual subjects on columns, data (not cumulative) over time on rows
+Dir = "C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\graphs\frontloading\day1" %enter the name of the folder where you want your results to be saved
 Time_Variable = 'Second'; %Change the timescale to match your data; 'Minute' or 'Second'
-Metabolic_Rate = 0.0001; %enter the metabolic rate in g/kg/your timescale (min or sec). 
+Metabolic_Rate = 0.0001 %enter the metabolic rate in g/kg/your timescale (min or sec). 
 %See ChooseExample function for some commonly used metabolic rates.
 
 %create the directories to move the data into
@@ -86,7 +86,7 @@ mkdir(Dir, 'Inconclusive_Results');
 mkdir(Dir, 'Identified_Non_Frontloaders');
 
 %create vector of subject numbers
-subjects = ratsInfo.ratID(group)';
+subjects = ratsInfo.ratID(group)'
 
 %initiate variables to hold the subject numbers of each group 
 Inconclusive_Result_Subject_Numbers = [];
@@ -210,7 +210,7 @@ for XX = 1:numel(subjects);
             set(h1,'LineWidth',5); set(h1, 'MarkerSize', 20);
             fig_name = strcat('Fig_Animal_',num2str(subjects(XX)));
             figuresdir = ([Dir '\Identified_Frontloaders']);
-            newname = fullfile(figuresdir, [fig_name '.png']);
+            newname = fullfile(figuresdir(1), [fig_name '.png']);
             saveas(h, newname, 'png');
             close all
         else
@@ -243,7 +243,7 @@ for XX = 1:numel(subjects);
 end
 
 %save subject numbers into categories:
-%clearvars -except Frontloader_Subject_Numbers Inconclusive_Result_Subject_Numbers Non_Frontloader_Subject_Numbers
+clearvars -except Frontloader_Subject_Numbers Inconclusive_Result_Subject_Numbers Non_Frontloader_Subject_Numbers
 
 %create one vector with all the information for each subject 
 %create a vector with the subject numbers sorted
