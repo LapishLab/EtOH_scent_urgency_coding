@@ -102,14 +102,13 @@ for XX = 1:numel(subjects);
     %if these if statements are true, the animal is classified as inconclusive.
     %the first change point is greater than the other two means that the most signiticant change
     %point isn't the earliest in the session.  criteria1 = false/0 
-    if chPt(1) > chPt(2) && chPt(1) > chPt(3) && chPt(1) > half_session
+    if chPt(1) > chPt(2) && chPt(1) > chPt(3) || chPt(1) < chPt(2) && chPt(1) > chPt(3) || chPt(1) > chPt(2) && chPt(1) < chPt(3) 
         %if criteria 1 is not met, classify subject as inconclusive.  
         Criteria1 = 0;
         subjectClassification(XX,1:2) = {subjects(XX), "Inconclusive"};
         changePoint_all = [changePoint_all; chPt(1)];
         firstSlope_all = [firstSlope_all; stats_pre.beta(2)];
-        secondSlope_all = [secondSlope_all; stats_post.beta(2)];
-        
+        secondSlope_all = [secondSlope_all; stats_post.beta(2)]; 
     else
         %if the first change point is in the first half of the session,
         %they move on to the next stage of analysis 
@@ -140,11 +139,12 @@ for XX = 1:numel(subjects);
             changePoint_all = [changePoint_all; chPt(1)];
             firstSlope_all = [firstSlope_all; stats_pre.beta(2)];
             secondSlope_all = [secondSlope_all; stats_post.beta(2)];
-        elseif (Criteria1 == 1) && (Criteria3 == 0)
+        else
             subjectClassification(XX,1:2) = {subjects(XX), "Non_frontloader"};
             changePoint_all = [changePoint_all; chPt(1)];
             firstSlope_all = [firstSlope_all; stats_pre.beta(2)];
             secondSlope_all = [secondSlope_all; stats_post.beta(2)];
+        end 
         clear h hx fig_name figuresdir newname raw data stats_pre stats_post t_stat t_stat_den t_stat_df t_stat_num Criteria1 Criteria2 Criteria3 model model1 time_axis time_axis2 Metabolic_rate_plot time_post time_pre y_post y_pre
     end
 end

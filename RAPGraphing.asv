@@ -52,20 +52,20 @@ hold off;
 cons_lick = table2array(RAP_all) ./ RAP_totalLicks;
 
 %groups
-group = ratsInfo.strain == "P" & ratsInfo.treatment == "EtOH" & ratsInfo.sex == "F";
+group1 = ratsInfo.strain == "P" & ratsInfo.treatment == "EtOH" & ratsInfo.sex == "M";
 
 %convert any infinity values to NaNs 
 %some values were divide by zero because lick measurer was faulty 
 cons_lick(isinf(cons_lick)) = NaN
 
 %find data for the specific group on ethanol days
-etoh_cons_lick = cons_lick(group, [5 10]);
+etoh_cons_lick = cons_lick(group1, [1 3 5 6 8 10 11 13]);
 
 %find data for the specific group on water days
-h2o_cons_lick = cons_lick(group, [2 4 7 9]);
+
 
 %find the mean across rows/subjects
-mn_cons_lick = mean(etoh_cons_lick, 2, 'omitnan');
+mn_cons_lick = mean(group_cons_lick, 2, 'omitnan');
 
 %% Line Plot of Consumption Across days %%
 % can be z-scored
