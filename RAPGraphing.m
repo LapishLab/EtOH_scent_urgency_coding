@@ -172,36 +172,43 @@ end
 %% Plot the binned data
 
 %RAP experimental days you want to graph
-days = [1:10];
+days = [1 3 5 6 8 10];
 
 %groups you want to graph together 
 %group1 = ratsInfo.strain == "P" & ratsInfo.sex == "M" & ratsInfo.treatment == "EtOH";
 %group2 = ratsInfo.strain == "P" & ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH";
-group3 = ratsInfo.strain == "P" & ratsInfo.sex == "M" & ratsInfo.treatment == "Control";
-group4 = ratsInfo.strain == "P" & ratsInfo.sex == "F" & ratsInfo.treatment == "Control";
+%group3 = ratsInfo.strain == "P" & ratsInfo.sex == "M" & ratsInfo.treatment == "Control";
+%group4 = ratsInfo.strain == "P" & ratsInfo.sex == "F" & ratsInfo.treatment == "Control";
 
 %initialize graph
-fig = tiledlayout(1,10)
+pat = 'C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\graphs\frontloading_individual'
 
 %graph cumulative licks per minute for each day of RAP
-for i = 1:numel(days)
-    nexttile
-    %plotLPError([1:62],cell2mat(binLick(group1,i)), "mn", 'o-');
-    hold on; 
-    %plotLPError([1:62],cell2mat(binLick(group2,i)), "mn", 'o-');
-    plotLPError([1:62],cell2mat(binLick(group3,i)), "mn", 'x-');
-    plotLPError([1:62],cell2mat(binLick(group4,i)), "mn", 'x-');
-    title(['Day ' num2str(i)]);
-    ylim([0 300])
-end; 
+for rat = 1:size(binLick, 1)
+    fig = tiledlayout(1,numel(days));
+    for i = 1:numel(days)
+        nexttile;
+        plot([1:3600], binLick{rat, i}, 'x-');
+        hold on;
+        title(['Day ' num2str(days(i))]);;
+        hold off; 
+    end
+    subject = ['Subject' num2str(ratsInfo.ratID(rat))];
+    fig.Title.String = subject ;
+    fig.XLabel.String = "Time (min)";
+    fig.YLabel.String = "Cumulative Licks";
+    filename = fullfile(pat, [subject '.png']);
+    saveas(gcf,filename);
+end
+ 
 
-fig.Title.String = "P Control RAP Cumulative Licks over Time"
-fig.Title.FontSize = 18
-fig.XLabel.String = "Time (min)"
-fig.YLabel.String = "Cumulative Licks"
-fig.YLabel.FontSize = 18
-fig.XLabel.FontSize = 18
-lgd = legend("Control Male", "Control Female");
+% fig.Title.String = "P Control RAP Cumulative Licks over Time"
+% fig.Title.FontSize = 18
+% fig.XLabel.String = "Time (min)"
+% fig.YLabel.String = "Cumulative Licks"
+% fig.YLabel.FontSize = 18
+% fig.XLabel.FontSize = 18
+% lgd = legend("Control Male", "Control Female");
 
 
 %% Plot the binned data. 

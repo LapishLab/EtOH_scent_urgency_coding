@@ -52,20 +52,20 @@ hold off;
 cons_lick = table2array(RAP_all) ./ RAP_totalLicks;
 
 %groups
-group1 = ratsInfo.strain == "P" & ratsInfo.treatment == "EtOH" & ratsInfo.sex == "M";
+group = ratsInfo.strain == "P" & ratsInfo.treatment == "EtOH" & ratsInfo.sex == "F";
 
 %convert any infinity values to NaNs 
 %some values were divide by zero because lick measurer was faulty 
 cons_lick(isinf(cons_lick)) = NaN
 
 %find data for the specific group on ethanol days
-etoh_cons_lick = cons_lick(group1, [1 3 5 6 8 10 11 13]);
+etoh_cons_lick = cons_lick(group, [5 10]);
 
 %find data for the specific group on water days
-
+h2o_cons_lick = cons_lick(group, [2 4 7 9]);
 
 %find the mean across rows/subjects
-mn_cons_lick = mean(group_cons_lick, 2, 'omitnan');
+mn_cons_lick = mean(etoh_cons_lick, 2, 'omitnan');
 
 %% Line Plot of Consumption Across days %%
 % can be z-scored
@@ -172,28 +172,28 @@ end
 %% Plot the binned data
 
 %RAP experimental days you want to graph
-days = [1:10];
+days = [1 3 5 6 8 10];
 
 %groups you want to graph together 
 %group1 = ratsInfo.strain == "P" & ratsInfo.sex == "M" & ratsInfo.treatment == "EtOH";
 %group2 = ratsInfo.strain == "P" & ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH";
-group3 = ratsInfo.strain == "P" & ratsInfo.sex == "M" & ratsInfo.treatment == "Control";
-group4 = ratsInfo.strain == "P" & ratsInfo.sex == "F" & ratsInfo.treatment == "Control";
+%group3 = ratsInfo.strain == "P" & ratsInfo.sex == "M" & ratsInfo.treatment == "Control";
+%group4 = ratsInfo.strain == "P" & ratsInfo.sex == "F" & ratsInfo.treatment == "Control";
 
 %initialize graph
-fig = tiledlayout(1,10)
+fig = tiledlayout(1,numel(days))
 
 %graph cumulative licks per minute for each day of RAP
-for i = 1:numel(days)
-    nexttile
-    %plotLPError([1:62],cell2mat(binLick(group1,i)), "mn", 'o-');
-    hold on; 
-    %plotLPError([1:62],cell2mat(binLick(group2,i)), "mn", 'o-');
-    plotLPError([1:62],cell2mat(binLick(group3,i)), "mn", 'x-');
-    plotLPError([1:62],cell2mat(binLick(group4,i)), "mn", 'x-');
-    title(['Day ' num2str(i)]);
-    ylim([0 300])
-end; 
+for rat = 1:size(binLick, 1)
+    for i = 1:numel(days)
+        nexttile
+        plotLPError([1:3600], binLick(rat, i))
+        hold on;
+        title(['Day ' num2str(i)])
+        fig.Title.String = "P Control RAP Cumulative Licks over Time"
+    end
+end
+ 
 
 fig.Title.String = "P Control RAP Cumulative Licks over Time"
 fig.Title.FontSize = 18

@@ -66,17 +66,10 @@ end
 for XX = 1:numel(subjects);
     data = Dataset(:,XX);
     
-
-    if isnan(data(1)) %check if the first location has a NaN. This means there was no data so the model won't work 
-        subjectClassification(XX,1:2) = {subjects(XX), "NaN"};
-        changePoint_all = [changePoint_all; NaN];
-        firstSlope_all = [firstSlope_all; NaN];
-        secondSlope_all = [secondSlope_all; NaN];
-        continue; 
-    elseif data(1) ~= 0
+    if data(1) ~= 0;
         data = [0; data]; %if there is not a leading zero, add one. B/c the cumulative
         %sum data works against frontloaders if they drank during the
-        %first timepoint (this is a problem esp. w/ DID data
+        %first timepoint (this is a problem esp. w/ DID data)
     end
     
     %Run the PARCS function to detect change points
@@ -127,15 +120,9 @@ for XX = 1:numel(subjects);
     %     firstSlope_all = [firstSlope_all; stats_pre.beta(2)];
     %     secondSlope_all = [secondSlope_all; stats_post.beta(2)]; 
     
-    %if the first change point (change point with the best fit from the parcs model) is within 
-    % the last half of the session, set criteria1 to 0/false
+    %if the first change point (change point with the 
     if chPt(1) > half_session
-        Criteria1 = 0;
-        subjectClassification(XX,1:2) = {subjects(XX), "Inconclusive"};
-        changePoint_all = [changePoint_all; chPt(1)];
-        firstSlope_all = [firstSlope_all; stats_pre.beta(2)];
-        secondSlope_all = [secondSlope_all; stats_post.beta(2)]; 
-    else 
+
         %if the first change point is in the first half of the session,
         %they move on to the next stage of analysis 
         Criteria1 = chPt(1) < half_session;
