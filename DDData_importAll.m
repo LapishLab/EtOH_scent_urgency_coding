@@ -1,4 +1,4 @@
-function [allData, allDDiVals, lastTenDDiVals, day_dates] = DDData(pat, dayNumbers)
+function [allData, allDDiVals, lastTenDDiVals, day_dates] = DDData_importAll(pat, dayNumbers, opts)
 
 %% Importing Delay Discounting Data from MedPC Files
 % This function imports delay disconting medPC files and compiles all of
@@ -19,6 +19,14 @@ function [allData, allDDiVals, lastTenDDiVals, day_dates] = DDData(pat, dayNumbe
 % lastTenDDiVals: matrix with the mean of the iValue from the last 10
 % trials for each rat across each day 
 
+%% Describe inputs %%
+arguments 
+    pat {mustBeText} % path to folder containing individual folders with medPC files for each day 
+    dayNumbers {mustBeInteger} % day numbers specific to day folders in the dir_path that you want to pull out 
+    opts.removeRats logical = false %false automatically assumes you don't need remove rats, if true then rats will be removed that didn't meet criteria 
+end 
+
+
 %% Create array of days 
 %create matrix that will hold the day numbers, will hold all the iValues
 %for each animal, and a matrix of only the mean of the last 10 trials
@@ -29,7 +37,7 @@ day_dates = {};
 
 %% Create allData variable with all DD days  
 %Change numbers in the for loop depending on how many days you have
-for day = 1:length(dayNumbers);
+for day = 1:numel(dayNumbers);
     %add day naming information to the path name so you can get the full
     %path name to the folder with all the MedPC files
     fullPath = [pat '\day' num2str(dayNumbers(day)) '\'];
@@ -43,13 +51,14 @@ for day = 1:length(dayNumbers);
 
 
     %create a for loop that finds the location of and removes rats who didn't make
-    %testing criteria
-    % can comment out if you don't need this 
-    for rat = 1:size(allData{day},2);
-        %if allData{day}{rat}.subjectNumber == 53 | allData{day}{rat}.subjectNumber == 17| allData{day}{rat}.subjectNumber == 32|allData{day}{rat}.subjectNumber == 47;
-            %allData{day}{rat} = [];
-        %end;
-    end;
+    %testing criteria. only needed for wistars
+    if opts.removeRats == true
+        for rat = 1:size(allData{day},1)
+            if allData{day}{rat}.Subject == 53 || allData{day}{rat}.Subject == 17|| allData{day}{rat}.Subject == 32 || allData{day}{rat}.Subject == 47
+                allData{day}{rat} = [];
+            end
+        end
+    end
 
 
     %determines which cells are empty. logical array with 1 for full cells and 0 for empty 
@@ -100,5 +109,3 @@ for day = 1:length(dayNumbers);
     %add iValMatrix to the output variable allDDiVals
     allDDiVals{day} = iVal_matrix;
 end; 
-
-%clearvars -except allData allDDiVals lastTenDDiVals day_dates

@@ -31,10 +31,12 @@ for day = 1:numel(days);
     consumptionOverTime{day} = consBin;
 end; 
 
-%% Import frontloading %%
+%% Import frontloading data %%
+% includes first slope, second slope, change point, and subject
+% classification per day
 
 %experiment days to look at 
-days = [1 3 5 6 8 10];
+days = [1 3 5 6 8 10 11 13];
 
 %subject number vector thats needed to feed into the code 
 subjects = ratsInfo.ratID';
@@ -54,3 +56,13 @@ for i = 1:numel(days)
     first_slopes(:,i) = fSlp;
     second_slopes(:,i) = sSlp;
 end 
+
+%% Check how the data looks %%
+
+% correlation between first slope and change point
+% longer change points should have less first slopes 
+
+change_point_vector = [change_points(:,1);change_points(:,2);change_points(:,3);change_points(:,4);change_points(:,5);change_points(:,6)];
+first_slope_vector = [first_slopes(:,1);first_slopes(:,2);first_slopes(:,3);first_slopes(:,4);first_slopes(:,5);first_slopes(:,6)];
+
+plot(change_point_vector, first_slope_vector, 'x')
