@@ -21,11 +21,9 @@ discounting_K = getKvalue(delays,indifference_points)
 % get cumulative data
 consumptionOverTime = calc_cumulativeConsumption(RAP_all, RAP_lickTmSerMtx, RAP_totalLicks, cumulative_type = "g/kg");
 
-ratRow = 94
-
 % --- Lapish change point --- %
 %get consumption for single rat 
-ivals = consumptionOverTime{5}(ratRow,:)';
+ivals = consumptionOverTime{5}()';
 
 %find the fit for multiple different sets of data. Run with trials in rows
 %and rats in columns 
@@ -52,7 +50,7 @@ compare = [vals(1) ind_slope1; vals(2) ind_slope2; vals(3) ind_changePt];
 %% Compare discounting K values to consumption (g/kg)/lick %%
 % data needed: discounting_K, cons_lick from calc_consumption_lick script
 
-group =  ratsInfo.strain == "Wistar" & ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH";
+group =  ratsInfo.strain == "P" & ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH";
 
 group_cons_lick = calc_consumption_lick(RAP_all, RAP_totalLicks, days = [1 3 5 6 8 10], group = group);
 
@@ -64,6 +62,6 @@ scatter(nl_kValues(group),group_cons_lick)
 hold on;
 xlabel("discounting(k)")
 ylabel("Consumption(g/kg)/lick")
-title("EtOH Wistar Females")
+title("EtOH P Femaes")
 hold off; 
 

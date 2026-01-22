@@ -161,43 +161,12 @@ save("C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\E
 
 %% Import RAP Frontloading Classification Data %% 
 
-%% Organize the data in consumption (g/kg) per time unit %% 
-% can be in second or minute bins 
-% used to find and calculate the RAP data
-
-%vectors holding details from the experiment
-days = [1:size(RAP_all, 2)];
-rats = [1:size(RAP_all, 1)];
-
-%create minute or second time bins by making a vector of 1:60 or 1:3600 
-trlTime = [0:3600];
-%variable that will hold the data across all days
-consumptionOverTime = {} ;
-
-%for loop that organizes the data for front loading by calculating the amount of ethanol 
-%consumed during each second time bin. 
-for day = 1:numel(days);
-    %variable that will hold the data for each day
-    consBin = [];
-    for rat = 1:numel(rats);
-        %pull out the individual data for each rat on each day
-        lickTms = RAP_lickTmSerMtx{day}{rat};
-        %calculate the number of licks in each second time bin
-        binLicks = histcounts(lickTms,trlTime);
-        %divide each time bin by the total number of licks to get the
-        %percentage of licks in each time bin
-        percLick = binLicks./numel(lickTms);
-        %multiple the lick per bin percentage by total consumption to find the amount
-        %consumed during each second bin and add it to the array 
-        indConsBin = percLick.*table2array(RAP_all(rat,day));
-        consBin = [consBin;indConsBin];
-    end;
-    consumptionOverTime{day} = consBin;
-end; 
-
 %% Import data %%
 % includes change points, first slopes, second slopes, and individual
 % subject frontloading classification per experiment day
+
+%get consumption over time data 
+consumptionOverTime = calc_cumulativeConsumption(RAP_all, RAP_lickTmSerMtx, RAP_totalLicks, "g/kg")
 
 %experiment days to look at 
 days = [1 3 5 6 8 10 11 13];

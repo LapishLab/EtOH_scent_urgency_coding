@@ -46,27 +46,6 @@ hold off;
 
 % look at week averages
 
-%% Calculate consumption per lick 
-
-%calculate consumption per lick for all data
-cons_lick = table2array(RAP_all) ./ RAP_totalLicks;
-
-%groups
-group = ratsInfo.strain == "P" & ratsInfo.treatment == "EtOH" & ratsInfo.sex == "F";
-
-%convert any infinity values to NaNs 
-%some values were divide by zero because lick measurer was faulty 
-cons_lick(isinf(cons_lick)) = NaN
-
-%find data for the specific group on ethanol days
-etoh_cons_lick = cons_lick(group, [5 10]);
-
-%find data for the specific group on water days
-h2o_cons_lick = cons_lick(group, [2 4 7 9]);
-
-%find the mean across rows/subjects
-mn_cons_lick = mean(etoh_cons_lick, 2, 'omitnan');
-
 %% Line Plot of Consumption Across days %%
 % can be z-scored
 
@@ -155,19 +134,6 @@ fig1.XLabel.FontSize = 18
 lgd = legend("Frontloader", "NonFrontLoader", "Control")
 lgd.Layout.Tile = 'east';
 lgd.FontSize = 14
-
-%% Align all binned data
-% find minimum and maximum licking time points 
-mnMxLickTm = minmax(cell2mat(cellfun(@(x) cell2mat(x'), RAP_lickTmSerMtx, 'UniformOutput',false)));
-% create vector starting with 0 and going to the highest time series lick
-% point. Increment up by 60 for minutes or by 1 for seconds.  
-xA = [0:1:mnMxLickTm(2)];
-% i is the day by cycling through lick time series matrix. Cumulative licks
-% across the time series will be calculated for each rat on each day 
-for i=1:size(RAP_lickTmSerMtx,2)
-    hld = RAP_lickTmSerMtx{i};
-    binLick(:,i) = cellfun(@(x) cumsum(histcounts(x,xA)), hld, 'UniformOutput',false);
-end
 
 %% Plot the binned data
 
