@@ -16,6 +16,7 @@ end
 
 discounting_K = getKvalue(delays,indifference_points)
 
+
 %% Graph lapish change point vs cherish %%
 
 % get cumulative data
@@ -34,8 +35,6 @@ for j = 1:size(ivals,2);
     res(j,:) = [vals(1) vals(2) vals(3) pv]; %[slope 1, slope 2, knot, pval]
 end
 
-
-
 % --- Cherish Fit --- %
 day = 3
 ind_changePt = change_points(ratRow, day);
@@ -52,18 +51,57 @@ compare = [vals(1) ind_slope1; vals(2) ind_slope2; vals(3) ind_changePt];
 %% Compare discounting K values to consumption (g/kg)/lick %%
 % data needed: discounting_K, cons_lick from calc_consumption_lick script
 
-group =  ratsInfo.strain == "Wistar" & ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH";
+group =  ratsInfo.strain == "P" & ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH";
 
-group_cons_lick = calc_consumption_lick(RAP_all, RAP_totalLicks, days = [1 3 5 6 8 10], group = group);
+constant = 0.0789
+g_cons = table(convert_gkg_g(RAP_weights, RAP_all, ratsInfo, constant))
+group_cons_lick = calc_consumption_lick(g_cons, RAP_totalLicks, days = [1 3 5 6 8 10], group = group);
+
+
+
 
 %find the natural log of the discounting K values 
 
 nl_kValues = log(discounting_K);
 
-scatter(nl_kValues(group),group_cons_lick)
-hold on;
-xlabel("discounting(k)")
-ylabel("Consumption(g/kg)/lick")
-title("EtOH Wistar Females")
-hold off; 
+rho = []; pval = []; 
+
+[rho, pval] = corr(nl_kValues(group),group_cons_lick)
+% scatter(nl_kValues(group), group_cons_lick)
+% hold on;
+% xlabel("discounting(k)")
+% ylabel("Consumption(g/kg)/lick")
+% title("EtOH Wistar Males")
+% hold off; 
+
+%% graph k vs. etOH consumption
+
+group = ratsInfo.treatment == "EtOH" & ratsInfo.strain == "P" & ratsInfo.sex == "M";
+nl_k = log(discounting_K)
+m = table2array(mean(RAP_all(:, [6 8 10]),2));
+
+[r, p] = corr(nl_k(group), m(group))
+scatter(nl_k(group), m(group))
+xlabel("ln(k)")
+ylabel("Consumption (g/kg)")
+title("Wistar Male")
+
+
+%% Graph k vs. frontloading slopes 
+% found frontloading slope 1 using piecewise linear function 
+
+day10_slopes = all_results{6}(:,1);
+day10_slopes(day10_slopes == 0) = NaN;
+
+group = ratsInfo.treatment == "EtOH" & ratsInfo.strain == "P" & ratsInfo.sex == "F";
+
+nl_k = log(discounting_K);
+
+[rho, p] = corr(nl_k(group), log(day10_slopes(group)), 'Rows', 'complete')
+scatter(nl_k(group), log(day10_slopes(group)))
+hold on
+xlabel("nl(k)")
+ylabel("nl(slope1 RAP day10)")
+title("K vs. RAP Frontloading Slope1 Day10 Wistar Male E")
+hold off;
 

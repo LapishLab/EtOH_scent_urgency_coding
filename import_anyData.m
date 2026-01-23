@@ -66,7 +66,29 @@ RAP_all = [wistar_RAP(:, matching_variables); P_RAP(:, matching_variables)];
 RAP_ratsInfo = RAP_all(:,~contains(RAP_all.Properties.VariableNames, 'day'));
 RAP_all = RAP_all(:,contains(RAP_all.Properties.VariableNames, 'day'));
 %save variables to variable folder
-save("C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\EtOH_scent_urgency_coding\variables\RAP_consumption", "RAP_all")
+save("C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\EtOH_scent_urgency_coding\variables\RAP_consumption.mat", "RAP_all")
+
+
+
+
+
+
+
+%% Import Weights %%
+
+%import the data table with all the weights for IAP and RAP
+pat = "C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\weights_all.xlsx";
+weights = readtable(pat);
+
+% --- IAP Weights Specifically --- %
+
+% --- RAP Weights Specifically --- %
+RAP_weights = weights{:, contains(weights.Properties.VariableNames, "RAP")};
+save("C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\EtOH_scent_urgency_coding\variables\RAP_weights.mat", "RAP_weights")
+
+
+
+
 
 
 
