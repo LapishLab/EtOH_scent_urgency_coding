@@ -18,9 +18,9 @@ for i = 1:size(IAP_pat, 1)
     ratsInfo_next([max_index+1:end], :) = [];
     %combine tables together
     if i > 1;
-        ratsInfo_all = outerjoin(ratsInfo_all, ratsInfo_next, 'MergeKeys', true) 
+        ratsInfo_all = outerjoin(ratsInfo_all, ratsInfo_next, 'MergeKeys', true);
     else; 
-        ratsInfo_all = ratsInfo_next
+        ratsInfo_all = ratsInfo_next;
     end; 
 end; 
 
