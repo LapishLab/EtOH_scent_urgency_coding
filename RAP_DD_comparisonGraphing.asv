@@ -51,28 +51,30 @@ compare = [vals(1) ind_slope1; vals(2) ind_slope2; vals(3) ind_changePt];
 %% Compare discounting K values to consumption (g/kg)/lick %%
 % data needed: discounting_K, cons_lick from calc_consumption_lick script
 
-group =  ratsInfo.strain == "Wistar" & ratsInfo.sex == "M" & ratsInfo.treatment == "EtOH"
+group = ratsInfo.treatment == "EtOH" & ratsInfo.sex == "F";
 
 constant = 0.0789
-g_cons = table(convert_gkg_g(RAP_weights, RAP_all, ratsInfo, constant))
-group_cons_lick = calc_consumption_lick(g_cons, RAP_totalLicks, days = [6 8 10], group = group);
+%g_cons = table(convert_gkg_g(RAP_weights, RAP_all, ratsInfo, constant))
+group_cons_lick = calc_consumption_lick(RAP_all, RAP_totalLicks, days = [6 8 10], group = group);
+cons_mn = mean(table2array(RAP_all(group, [6 8 10])), 2, 'omitnan')
 
 %find the natural log of the discounting K values 
 nl_kValues = log(discounting_K(group));
 
 %standardize g/kg consumption 
-p = zscore(group_cons_lick);
+standard_cons_lick = zscore(group_cons_lick);
+%histogram(standard_cons_lick, 'BinWidth', 0.7)
 
-
+%qqplot(standard_cons_lick)
 rho = []; pval = []; 
 
-[rho, pval] = corr(nl_kValues(group),group_cons_lick)
-% scatter(nl_kValues(group), group_cons_lick)
-% hold on;
-% xlabel("discounting(k)")
-% ylabel("Consumption(g/kg)/lick")
-% title("EtOH Wistar Males")
-% hold off; 
+[rho, pval] = corr(standard_cons_lick,nl_kValues, 'Type','Pearson')
+ scatter(standard_cons_lick, nl_kValues)
+ hold on;
+ xlabel("z scored g/kg/lick")
+ ylabel("ln(k)")
+ title("F EtOH")
+ hold off; 
 
 %% graph k vs. etOH consumption
 
@@ -104,4 +106,69 @@ xlabel("nl(k)")
 ylabel("nl(slope1 RAP day10)")
 title("K vs. RAP Frontloading Slope1 Day10 Wistar Male E")
 hold off;
+
+%% Calculate % ADE and compare to k %%
+% Calculate the percentage 
+IAP_all = table2array(IAP_all);
+RAP_all = table2array(RAP_all);
+
+%calculate percentage of consumption from friday to monday 
+perc_ADE_IAP = [(IAP_all(:,3) ./ IAP_all(:,1)) (IAP_all(:,6) ./ IAP_all(:,4)) (IAP_all(:,9) ./ IAP_all(:, 7)) (IAP_all(:, 12) ./ IAP_all(:, 10))];
+
+perc_ADE_RAP = [(RAP_all(:,5) ./ RAP_all(:, 1)) (RAP_all(:,10) ./ RAP_all(:, 6))];
+
+%if there are any zeros, conver them to NaNs for now 
+perc_ADE_RAP(perc_ADE_RAP(:, 2) == 0, 2) = NaN
+
+%pull out specific group
+group = ratsInfo.treatment == "EtOH" & ratsInfo.strain == "P" & ratsInfo.sex == "M"
+
+% Filter the percentage arrays based on the specified group
+transform_RAP = log10(perc_ADE_RAP(:, 2));
+histogram(transform_RAP(group))
+%qqplot(transform_RAP(group))
+
+transform_k = log(discounting_K)
+
+scatter(transform_RAP(group), transform_k(group))
+hold on; 
+xlabel("log10 IAP % ADE")
+ylabel("nl(k)")
+title("P M RAP ADE Change vs. k")
+hold off; 
+
+[rho, p] = corr(transform_RAP(group), transform_k(group), 'Rows','complete', 'Type', 'Spearman')
+
+%% Weight vs. k
+
+DD_weights = weights(:,contains(weights.Properties.VariableNames, "DD"));
+
+group1 = ratsInfo.treatment == "EtOH" & ratsInfo.strain == "Wistar" & ratsInfo.sex == "M";
+DD_standard_w = zscore(mean(DD_weights{group1, [1 2]}, 2, 'omitnan'));
+
+group2 = ratsInfo.treatment == "EtOH" & ratsInfo.strain == "Wistar" & ratsInfo.sex == "F";
+DD_standard_w_f = zscore(mean(DD_weights{group2, [1 2]}, 2, 'omitnan'));
+
+group3  = ratsInfo.treatment == "EtOH" & ratsInfo.strain == "P" & ratsInfo.sex == "M";
+DD_standard_p = zscore(mean(DD_weights{group3, [1 2]}, 2, 'omitnan'));
+
+group4  = ratsInfo.treatment == "EtOH" & ratsInfo.strain == "P" & ratsInfo.sex == "F";
+DD_standard_p_f = zscore(mean(DD_weights{group4, [1 2]}, 2, 'omitnan'));
+
+nl_k = log(discounting_K);
+
+[rho, p] = corr([DD_standard_w;DD_standard_w_f;DD_standard_p;DD_standard_p_f], [nl_k(group1);nl_k(group2);nl_k(group3);nl_k(group4)])
+scatter([DD_standard_w;DD_standard_w_f;DD_standard_p;DD_standard_p_f], [nl_k(group1);nl_k(group2);nl_k(group3);nl_k(group4)])
+hold on
+xlabel("z-scored weights")
+ylabel("nl(k)")
+title("all EtOH")
+hold off;
+
+
+
+
+
+
+
 

@@ -9,6 +9,7 @@ arguments
     RAP_lickTmSerMtx %licks across time
     RAP_totalLicks %table with total licks across all days 
     opts.cumulative_type {mustBeText} = "" %used to determine cumulative licks or g/kg over time, use licks or g/kg
+    opts.time {mustBeInteger} %cumulative time table, seconds or minutes. Input values are 60 or 3600
 end 
 
 %% Organize the data in consumption (g/kg) per time unit %% 
@@ -16,13 +17,16 @@ end
 % used to find and calculate the RAP data
 % variables needed: RAP_all, 
 
+%set the time variable in seconds or minutes
+trlTime = [0:opts.time]
+
 if contains(opts.cumulative_type, "g/kg")
 %vectors holding details from the experiment
     days = [1:size(RAP_all, 2)];
     rats = [1:size(RAP_all, 1)];
 
     %create minute or second time bins by making a vector of 1:60 or 1:3600 
-    trlTime = [0:3600];
+    %trlTime = [0:3600];
     %variable that will hold the data across all days
     consumptionOverTime = {} ;
 
@@ -55,12 +59,12 @@ elseif contains(opts.cumulative_type, "licks")
     mnMxLickTm = minmax(cell2mat(cellfun(@(x) cell2mat(x'), RAP_lickTmSerMtx, 'UniformOutput',false)));
     % create vector starting with 0 and going to the highest time series lick
     % point. Increment up by 60 for minutes or by 1 for seconds.  
-    xA = [0:1:mnMxLickTm(2)];
+    trlTime = [0:3600];
     % i is the day by cycling through lick time series matrix. Cumulative licks
     % across the time series will be calculated for each rat on each day 
     for i=1:size(RAP_lickTmSerMtx,2)
         hld = RAP_lickTmSerMtx{i};
-        binLick = [binLick;cell2mat(cellfun(@(x) cumsum(histcounts(x,xA)), hld, 'UniformOutput',false))];
+        binLick = [binLick;cell2mat(cellfun(@(x) cumsum(histcounts(x,trlTime)), hld, 'UniformOutput',false))];
         consumptionOverTime{i} = binLick
         binLick = []
     end

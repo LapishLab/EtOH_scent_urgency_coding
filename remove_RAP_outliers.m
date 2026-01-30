@@ -26,6 +26,7 @@ for i = 1:numel(rats)
     %number that goes with that location
     if row == find(ratsInfo.ratID == rats(i)) & col == days(i)
         RAP_totalLicks(row, col) = NaN; RAP_all{row, col} = NaN;
+        RAP_lickTmSerMtx{col}{row} = NaN;
     else 
         warning(['Location of outlier data ' num2str(i) ' isnt matching day and rat number'])
     end 

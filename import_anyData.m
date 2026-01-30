@@ -83,8 +83,11 @@ weights = readtable(pat);
 % --- IAP Weights Specifically --- %
 
 % --- RAP Weights Specifically --- %
-RAP_weights = weights{:, contains(weights.Properties.VariableNames, "RAP")};
-save("C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\EtOH_scent_urgency_coding\variables\RAP_weights.mat", "RAP_weights")
+%Weights = weights{:, contains(weights.Properties.VariableNames, "RAP")};
+%save("C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\EtOH_scent_urgency_coding\variables\RAP_weights.mat", "RAP_weights")
+
+
+
 
 
 
