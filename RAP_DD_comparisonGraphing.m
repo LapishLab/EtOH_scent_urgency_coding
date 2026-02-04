@@ -51,11 +51,18 @@ compare = [vals(1) ind_slope1; vals(2) ind_slope2; vals(3) ind_changePt];
 %% Compare discounting K values to consumption (g/kg)/lick %%
 % data needed: discounting_K, cons_lick from calc_consumption_lick script
 
-group = ratsInfo.treatment == "EtOH" & ratsInfo.sex == "F";
+group = ratsInfo.treatment == "EtOH" & ratsInfo.strain == "P" & ratsInfo.sex == "F"% & ratsInfo.drinkClass == "High";
 
 constant = 0.0789
 %g_cons = table(convert_gkg_g(RAP_weights, RAP_all, ratsInfo, constant))
-group_cons_lick = calc_consumption_lick(RAP_all, RAP_totalLicks, days = [6 8 10], group = group);
+group_cons_lick = calc_consumption_lick(RAP_all, RAP_totalLicks, days = [1], group = group);
+
+%how to get data from multiple days instead of the mean 
+days = [1 3 5 6 8 10]
+for i = 1:numel(days)
+    group_cons_lick(:, i) = calc_consumption_lick(RAP_all, RAP_totalLicks, days = [days(i)], group = group);
+end
+
 cons_mn = mean(table2array(RAP_all(group, [6 8 10])), 2, 'omitnan')
 
 %find the natural log of the discounting K values 
