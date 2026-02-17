@@ -16,8 +16,6 @@ cons_lick = table2array(RAP_all) ./ RAP_totalLicks;
 %some values were divide by zero because lick measurer was faulty 
 cons_lick(isinf(cons_lick)) = 0;
 
-%initialize variables
-group_cons_lick = []
 
 if isempty(opts.days) && isempty(opts.group)
     days = [1:14];

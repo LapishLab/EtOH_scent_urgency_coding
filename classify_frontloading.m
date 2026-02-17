@@ -5,7 +5,7 @@
 %time scale variable
 time = 3600;
 % calculate cumulative RAP data
-consumptionOverTime = calc_cumulativeConsumption(RAP_all, RAP_lickTmSerMtx, RAP_totalLicks, cumulative_type = "g/kg", time = time);
+consumptionOverTime = calc_cumulativeConsumption(RAP_all, RAP_lickTmSerMtx, RAP_totalLicks, cumulative_type = "licks", time = time);
 
 data = consumptionOverTime;
 
@@ -88,13 +88,14 @@ slope_diff = slope1 - slope2
 %find the average of slope1 only on those days that they were found to
 %frontload
 avg_slope1 = [];
-for i = 1:numel(nl_k)
+for i = 1:size(all_frontloaders,1);
     loadDays = all_frontloaders(i, :);
     %convert NaNs to false
     if any(isnan(loadDays))
          loadDays(isnan(loadDays)) = 0;
     end
-    avg_slope1 = [avg_slope1; mean(slope_diff(i, logical(loadDays)), 'omitnan')];
+    avg_slope1 = [avg_slope1; mean(slope1(i, logical(loadDays)), 'omitnan')];
+
 end
 
 avg_slope1 = mean(slope_diff(:, [4:6]), 2, 'omitnan')

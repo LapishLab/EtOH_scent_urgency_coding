@@ -83,15 +83,8 @@ weights = readtable(pat);
 % --- IAP Weights Specifically --- %
 
 % --- RAP Weights Specifically --- %
-%Weights = weights{:, contains(weights.Properties.VariableNames, "RAP")};
+Weights = weights{:, contains(weights.Properties.VariableNames, "RAP")};
 %save("C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\EtOH_scent_urgency_coding\variables\RAP_weights.mat", "RAP_weights")
-
-
-
-
-
-
-
 
 
 
@@ -107,8 +100,8 @@ maxFiles = 30;
 wistar_RAP = anaRap(dir_path, days, maxFiles, fix_file = true, allData = false, sideMtx = false);
 
 %% Import Wistar RAP Renewal Data %%
-dir_path = 'E:\052224_11425_WistarUrgency\RAP\100724_Renewal\analysisData'
-days = 4
+dir_path = 'E:\052224_11425_WistarUrgency\RAP\100724_Renewal\analysisData';
+days = 4;
 maxFiles = 30;
 wistar_RAP_renewal = anaRap(dir_path, days, maxFiles, allData = false, sideMtx = false);
 
@@ -227,31 +220,36 @@ end
 %path to files. must be char not string
 pat = 'E:\052224_11425_WistarUrgency\Delay Discounting\DD Data\analysisData';
 %experiment days to import
+%day3 is start of curve, day26 is the end
 dayNumbers = [3:26];
+%specificy which data variables you want 
+variables = ["initial latency","initial levers", "choice latency", "choice levers"];
 %import data
-[w_allData, w_allDDiVals, w_lastTenDDiVals, w_day_dates] = DDData_importAll(pat, dayNumbers, removeRats = true);
+w_output = DDData_importAll(pat, dayNumbers, variables, removeRats = true);
 
 % --- P Data --- %
 %path to files. must be char not string
 pat = 'E:\072125_121225_Prat_urgency\DD\analysisData';
 %experiment days to import
+%day12 is start of curve. day35 is the end
 dayNumbers = [12:35];
-%import data%
-[p_allData, p_allDDiVals, p_lastTenDDiVals, p_day_dates] = DDData_importAll(pat, dayNumbers);
+%import data
+p_output = DDData_importAll(pat, dayNumbers, variables);
 
 % --- Combine Together --- %
 %initialize variables to hold everything
-allData = {};
-allDDiVals = {};
+all_output = cell(size(w_output));
 
 %add the allData and allDDiVals together since they are in cell arrays
-for i = 1:numel(dayNumbers)
-    allData{i} = [w_allData{i};p_allData{i}]
-    allDDiVals{i} = [w_allDDiVals{i};p_allDDiVals{i}];
+for i = 1:numel(w_output)
+    all_output{i} = cell(size(w_output{i}));
+    for m = 1:numel(w_output{i})
+        all_output{i}{m} = [w_output{i}{m};p_output{i}{m}];
+    end
 end; 
 
 %add the lastTenDDiVals variables together since they are doubles 
-lastTenDDiVals = [w_lastTenDDiVals;p_lastTenDDiVals];
+%lastTenDDiVals = [w_output{1};p_output{1}];
 
 %% Save Data %%
 save("C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\EtOH_scent_urgency_coding\variables\allData.mat", "allData");

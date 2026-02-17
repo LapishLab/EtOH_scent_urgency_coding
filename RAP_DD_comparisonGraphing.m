@@ -2,7 +2,7 @@
 % variables needed: allDDiVals
 
 %initialize variables
-indifference_points = []
+indifference_points = [];
 
 %delay vector
 delays = [0 1 2 4 8 16];
@@ -48,14 +48,28 @@ compare = [vals(1) ind_slope1; vals(2) ind_slope2; vals(3) ind_changePt];
 
 
 
-%% Compare discounting K values to consumption (g/kg)/lick %%
+%% Compare discounting K values to consumption g/kg/lick %%
 % data needed: discounting_K, cons_lick from calc_consumption_lick script
 
-group = ratsInfo.treatment == "EtOH" & ratsInfo.strain == "P" & ratsInfo.sex == "F"% & ratsInfo.drinkClass == "High";
+constant = 0.0789;
 
-constant = 0.0789
-%g_cons = table(convert_gkg_g(RAP_weights, RAP_all, ratsInfo, constant))
-group_cons_lick = calc_consumption_lick(RAP_all, RAP_totalLicks, days = [1], group = group);
+group_cons_lick = [];
+cons_mn = [];
+nl_k = [];
+strList = {'Wistar', 'M';...
+        'Wistar', 'F';...
+        'P', 'M';...
+        'P', 'F'};
+
+for i = 1:4
+    %information and data for GROUP 1. Standardized data as well
+    group = ratsInfo.treatment == "EtOH" & ratsInfo.strain == string(strList{i,1}) & ratsInfo.sex == string(strList{i,2});% & ratsInfo.drinkClass == "High";
+    %g_cons = table(convert_gkg_g(RAP_weights, RAP_all, ratsInfo, constant))
+    group_cons_lick = [group_cons_lick; zscore(calc_consumption_lick(RAP_all, RAP_totalLicks, days = [6 8 10], group = group))];
+ 
+    %cons_mn = [cons_mn; zscore(mean(table2array(RAP_all(group, [6 8 10])), 2, 'omitnan'))];
+    nl_k = [nl_k;zscore(log(discounting_K(group)))];
+end
 
 %how to get data from multiple days instead of the mean 
 days = [1 3 5 6 8 10]
@@ -63,25 +77,17 @@ for i = 1:numel(days)
     group_cons_lick(:, i) = calc_consumption_lick(RAP_all, RAP_totalLicks, days = [days(i)], group = group);
 end
 
-cons_mn = mean(table2array(RAP_all(group, [6 8 10])), 2, 'omitnan')
-
-%find the natural log of the discounting K values 
-nl_kValues = log(discounting_K(group));
-
-%standardize g/kg consumption 
-standard_cons_lick = zscore(group_cons_lick);
-%histogram(standard_cons_lick, 'BinWidth', 0.7)
-
-%qqplot(standard_cons_lick)
 rho = []; pval = []; 
 
-[rho, pval] = corr(standard_cons_lick,nl_kValues, 'Type','Pearson')
- scatter(standard_cons_lick, nl_kValues)
- hold on;
- xlabel("z scored g/kg/lick")
- ylabel("ln(k)")
- title("F EtOH")
- hold off; 
+
+[rho, pval] = corr(group_cons_lick, nl_k, 'Type','Pearson')
+scatter(group_cons_lick, nl_k);
+hold on;
+
+ xlabel("z-scored g/kg/lick");
+ ylabel("ln(k)");
+ title("all EtOH");
+  
 
 %% graph k vs. etOH consumption
 
@@ -122,16 +128,18 @@ RAP_all = table2array(RAP_all);
 %calculate percentage of consumption from friday to monday 
 perc_ADE_IAP = [(IAP_all(:,3) ./ IAP_all(:,1)) (IAP_all(:,6) ./ IAP_all(:,4)) (IAP_all(:,9) ./ IAP_all(:, 7)) (IAP_all(:, 12) ./ IAP_all(:, 10))];
 
-perc_ADE_RAP = [(RAP_all(:,5) ./ RAP_all(:, 1)) (RAP_all(:,10) ./ RAP_all(:, 6))];
+perc_ADE_RAP = ((RAP_all(:,6) - RAP_all(:, 5)) ./ RAP_all(:, 5));
 
 %if there are any zeros, conver them to NaNs for now 
-perc_ADE_RAP(perc_ADE_RAP(:, 2) == 0, 2) = NaN
+perc_ADE_RAP(perc_ADE_RAP == 0) = 0;
+perc_ADE_RAP(isinf(perc_ADE_RAP)) = 0;
+
 
 %pull out specific group
-group = ratsInfo.treatment == "EtOH" & ratsInfo.strain == "P" & ratsInfo.sex == "M"
+group = ratsInfo.treatment == "EtOH" & ratsInfo.strain == "Wistar" & ratsInfo.sex == "M"
 
 % Filter the percentage arrays based on the specified group
-transform_RAP = log10(perc_ADE_RAP(:, 2));
+transform_RAP = log10(perc_ADE_RAP(group));
 histogram(transform_RAP(group))
 %qqplot(transform_RAP(group))
 

@@ -2,18 +2,18 @@
 %convert them to 0 in total licks and consumption 
 
 % rat subject IDs with an outlier 
-rats = [25 94 86 21 37 56 80 25 84]; 
+rats = [25 94 86 21 37 56 80 25 59 3 8 43]; 
 
 %days where the outlier is at. The day number aligns with the location of the rat
 %IDs in the rats vector
-days = [1 8 8 1 10 5 2 4 7];
+days = [1 8 8 1 10 5 2 4 12 1 1 7];
 
 %vector of the licks and consumption to make sure I am removing the correct
 %outlier. The consumption values are only the first 3 integers of the
 %consumption 
 
-licks = [2639 0 0 267 357 1436 249 987 2];
-cons = [0.08 1.1756 2.325 1.317 1.423 0.947 10.384 33.566 1.980];
+licks = [2639 0 0 267 357 1436 249 987 18 424 338 125];
+cons = [0.08 1.1756 2.325 1.317 1.423 0.947 10.384 33.566 4.988 17.391 30.555 0];
 
 for i = 1:numel(rats)
     %find the location of the outlier data in the matrix. Should match
@@ -31,4 +31,3 @@ for i = 1:numel(rats)
         warning(['Location of outlier data ' num2str(i) ' isnt matching day and rat number'])
     end 
 end 
-

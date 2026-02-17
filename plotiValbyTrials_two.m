@@ -15,55 +15,24 @@ delays = [0 1 2 4 8 16];
 trials = [1:30];
 
 %% Graphing mean iValues across trials for all rats
-% calculates mean with error bars across all trials. Mean of the last 2
-% days of testing. separate graph for each error 
+% calculates mean with error bars across all trials.
+% can describe specific groups that you want to look at 
+% can choose which days you want to assess 
 
-%create tiled layout to hold all the graphs
-fig1 = tiledlayout(1,6)
+%initialize variables
+indifference_points = []
 
-%specify what data variable you are using 
-data = allDDiVals
-%for loop that creates a graph of the average iValue across trials for each
-%delay. Concatenates days of data on top of each other depending on what
-%you specify
-for i = 1:length(delays);
-    %the column number of the last day for each delay
-    delayEnd = (i*4);
-    %pull out the four days of data for each delay 
-    chunkData = allDDiVals(delayEnd-3:delayEnd);
-    %specify which days you want to concatenate on top of each other
-    days = [3:4];
-    %specify the groups that you want to graph
-    group1 = ratsInfo.treatment == "Control" & ratsInfo.strain == "Wistar"
-    group2 = ratsInfo.treatment == "EtOH" & ratsInfo.strain == "Wistar"
-    group3 = ratsInfo.treatment == "Control" & ratsInfo.strain == "P"
-    group4 = ratsInfo.treatment == "EtOH" & ratsInfo.strain == "P"
-    %concatenate the data on top of each other for all the days of interest
-    %and for each group
-    group1Data = concatenateData(chunkData,days,group1);
-    group2Data = concatenateData(chunkData,days,group2);
-    group3Data = concatenateData(chunkData,days,group3);
-    group4Data = concatenateData(chunkData,days,group4);
-    %start the next graph for each delay day
-    nexttile
-    %plot the mean iValue across trials for each delay. Copy and paste
-    %extra lines as needed 
-    FD = plotLPError(trials, group1Data, "mn");
-    hold on;
-    FND = plotLPError(trials, group2Data, "mn");
-    FH2O = plotLPError(trials, group3Data, "mn");
-    FH2O = plotLPError(trials, group4Data, "mn");
+%delay vector
+delays = [0 1 2 4 8 16];
 
-    % add extra labeling information
-    title(['Delay ' num2str(delays(i))]);
-    ylim([0 6]);
-end;     
-
-%add specifying information for the graph that stretches across all plots
-fig1.Title.String = "DD for Male Rats Across Trials";
-fig1.YLabel.String = "iValue";
-fig1.XLabel.String = "Trials";
-lgd = legend("EtOH", "H2O");
+%create a vector of indifference points. average of the last two days for each rat
+for i = 1:numel(delays)
+    delayEnd = (i*4)
+    days = 
+    %days = [(delayEnd-1) (delayEnd)]; %variable column location of last 2 days for each delay
+    iVals_delays =  %pull the last two columns of each delay out and find the mean
+    indifference_points = [indifference_points iVals_delays]; %creates a matrix with each column containing the average of the last two days of each delay
+end
 
 
 %% Graphing organized DD8 testing week data 
@@ -202,36 +171,45 @@ hold off;
 % ivalue per trial for the different groups for each day
 % inputs: ratsInfo, allDDiVals 
 
-days = [16:17];
+%specific rat information 
+ratsInfo = ratsInfo(ratsInfo.strain == "Wistar", :)
 
-fig1 = tiledlayout(1,2)
+dayNumbers = [1:6];
 
-data = allDDiVals;
+%fig1 = tiledlayout(1,2);
+
+data = w_allDDiVals;
 
 %create a for loop that cycles through each day 
-for day = days(1):days(end)
+for day = 1:numel(dayNumbers)
+    fig1 = figure()
     %CHANGE these groups to whatever you want to graph
-    group1 = data{day}(ratsInfo.Sex == "F" & ratsInfo.Trtm == "EtOH",:);
+    group1 = data{day}(ratsInfo.strain == "Wistar" & ratsInfo.sex == "F" & ratsInfo.treatment == "Control",:);
     %group2 = allDDiVals{day}(ratsInfo.Sex == "F" & ratsInfo.Trtm == "EtOH" & ratsInfo.DNDClass == "NonDrinker", :);
-    group3 = data{day}(ratsInfo.Sex == "F" & ratsInfo.Trtm == "Control",:);
-    titleName = ['Day' num2str(day)];
-    nexttile;
+    group3 = data{day}(ratsInfo.strain =="Wistar" & ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH",:);
+    titleName = ['Wistar-Females-Day' num2str(day)]; %CHANGE this
+    %nexttile;
     %plot the groups together on the graph
     hold on;
-    fD = plotLPError(trials, group1, 'mn', 'o-', 'Color', 'red');
+    fD = plotLPError(trials, group1, 'mn', 'o-', 'Color', 'blue');
     %fND = plotLPError(trials, group2, "Mn", 'o-', 'Color', 'magenta');
-    fH2O = plotLPError(trials, group3, "mn", 'o-', 'Color', 'blue');
+    fH2O = plotLPError(trials, group3, "mn", 'o-', 'Color', 'red');
     ylim([0 6]);
+    legend("Water", "EtOH")
     title(titleName);
     hold off; 
+    %path = 'C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\graphs\dailyDD';
+    path = 'C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\graphs\dailyDD\DD0_learning'
+    filename = fullfile(path, [titleName '.png']);
+    saveas(gcf, filename);
 end; 
-
-%label the graph 
-fig1.Title.String = "Male Baseline Prefeeding Week DD";
-fig1.YLabel.String = "iValue";
-fig1.XLabel.String = "Trials";
-lgd = legend("EtOH", "Control");
-hold off; 
+% 
+% %label the graph 
+% fig1.Title.String = "Male Baseline Prefeeding Week DD";
+% fig1.YLabel.String = "iValue";
+% fig1.XLabel.String = "Trials";
+% lgd = legend("EtOH", "Control");
+% hold off; 
 
 %% Plot iValue across all DD Days
 %creates a graph for ivalue across trials for each day and saves each

@@ -51,21 +51,19 @@ if contains(opts.cumulative_type, "g/kg")
         end;
         consumptionOverTime{day} = consBin;
     end; 
-elseif contains(opts.cumulative_type, "licks")
+elseif contains(opts.cumulative_type, "lick")
 
     %% Organize the data in licks per time unit %% 
-    binLick = []
-    % find minimum and maximum licking time points 
-    mnMxLickTm = minmax(cell2mat(cellfun(@(x) cell2mat(x'), RAP_lickTmSerMtx, 'UniformOutput',false)));
-    % create vector starting with 0 and going to the highest time series lick
-    % point. Increment up by 60 for minutes or by 1 for seconds.  
-    %trlTime = [0:3600];
     % i is the day by cycling through lick time series matrix. Cumulative licks
     % across the time series will be calculated for each rat on each day 
     for i=1:size(RAP_lickTmSerMtx,2)
         hld = RAP_lickTmSerMtx{i};
+        binLick = [];
         binLick = [binLick;cell2mat(cellfun(@(x) cumsum(histcounts(x,trlTime)), hld, 'UniformOutput',false))];
-        consumptionOverTime{i} = binLick
-        binLick = []
+        %find where there are NaNs in hld and make sure that those in
+        %binLick are a vector of NaNs
+        idx = cellfun(@(x) any(isnan(x)), hld);
+        binLick(idx,:) = NaN;
+        consumptionOverTime{i} = binLick;
     end
 end 
