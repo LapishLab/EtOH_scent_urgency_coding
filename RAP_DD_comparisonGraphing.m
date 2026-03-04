@@ -19,14 +19,17 @@ discounting_K = getKvalue(delays,indifference_points)
 
 %% Graph lapish change point vs cherish %%
 
-% get cumulative data
-consumptionOverTime = calc_cumulativeConsumption(RAP_all, RAP_lickTmSerMtx, RAP_totalLicks, cumulative_type = "g/kg");
+time = 3600;
 
-ratRow = 94
+% get cumulative data
+consumptionOverTime = calc_cumulativeConsumption(RAP_all, RAP_lickTmSerMtx, RAP_totalLicks, cumulative_type = "g/kg", time = time);
+
+group = ratsInfo.sex == "M" & ratsInfo.strain == "P" & ratsInfo.treatment == "EtOH"; %& (ratsInfo.drinkClass == "High" | ratsInfo.drinkClass == "Medium");
 
 % --- Lapish change point --- %
 %get consumption for single rat 
-ivals = consumptionOverTime{5}(ratRow,:)';
+ivals = consumptionOverTime{10}(group,:);
+ivals= mean(cat(3, consumptionOverTime{7}(group, :), consumptionOverTime{9}(group, :)),3,'omitnan');
 
 %find the fit for multiple different sets of data. Run with trials in rows
 %and rats in columns 
@@ -64,8 +67,8 @@ strList = {'Wistar', 'M';...
 for i = 1:4
     %information and data for GROUP 1. Standardized data as well
     group = ratsInfo.treatment == "EtOH" & ratsInfo.strain == string(strList{i,1}) & ratsInfo.sex == string(strList{i,2});% & ratsInfo.drinkClass == "High";
-    %g_cons = table(convert_gkg_g(RAP_weights, RAP_all, ratsInfo, constant))
-    group_cons_lick = [group_cons_lick; zscore(calc_consumption_lick(RAP_all, RAP_totalLicks, days = [6 8 10], group = group))];
+    g_cons = table(convert_gkg_g(RAP_weights, RAP_all, ratsInfo, constant))
+    group_cons_lick = [group_cons_lick; zscore(calc_consumption_lick(g_cons, RAP_totalLicks, days = [6 8 10], group = group))];
  
     %cons_mn = [cons_mn; zscore(mean(table2array(RAP_all(group, [6 8 10])), 2, 'omitnan'))];
     nl_k = [nl_k;zscore(log(discounting_K(group)))];

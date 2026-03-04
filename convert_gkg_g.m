@@ -1,7 +1,7 @@
 function g_cons = convert_gkg_g(RAP_weights, RAP_all, ratsInfo, constant)
 
 arguments 
-    RAP_weights {mustBeInteger} %weights of all the rats 
+    RAP_weights %matrix with rat weights
     RAP_all %table of g/kg consumption in RAP
     ratsInfo %table of rat specific information 
     constant %constant value use to find g/kg when consuming ethanol to accuont for metabolism differences. 0.0789 for 10%, 0.1578 for 20%

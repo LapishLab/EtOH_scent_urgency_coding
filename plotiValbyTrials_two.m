@@ -25,13 +25,33 @@ indifference_points = []
 %delay vector
 delays = [0 1 2 4 8 16];
 
+group1 = ratsInfo.treatment == "EtOH" & ratsInfo.strain == "P" & ratsInfo.sex == "F";
+%group2 = ratsInfo.drinkClass == "Medium";
+%group3 = ratsInfo.drinkClass == "Low" & ratsInfo.sex == "F"
+group4 = ratsInfo.treatment == "Control" & ratsInfo.strain == "P" & ratsInfo.sex == "F";
 %create a vector of indifference points. average of the last two days for each rat
 for i = 1:numel(delays)
-    delayEnd = (i*4)
-    days = 
-    %days = [(delayEnd-1) (delayEnd)]; %variable column location of last 2 days for each delay
-    iVals_delays =  %pull the last two columns of each delay out and find the mean
-    indifference_points = [indifference_points iVals_delays]; %creates a matrix with each column containing the average of the last two days of each delay
+    delayEnd = (i*4);
+    days = [(delayEnd-1) (delayEnd)]; %variable column location of last 2 days for each delay
+
+    % -- Pull out mean of last 10 DD iVals -- %
+    %indifference_points = [indifference_points iVals_delays]; %creates a matrix with each column containing the average of the last two days of each delay
+
+    % -- Pull out mean of all choice trial iVals -- %
+    iVals_delays1 = mean(cat(3, allDDiVals{days(1)}(group1,:), allDDiVals{days(2)}(group1, :)),3, 'omitnan'); %pull the last two columns of each delay out and find the mean
+    %iVals_delays2 = mean(cat(3, allDDiVals{days(1)}(group2,:), allDDiVals{days(2)}(group2, :)),3, 'omitnan');
+    %iVals_delays3 = mean(cat(3, allDDiVals{days(1)}(group3,:), allDDiVals{days(2)}(group3, :)),3, 'omitnan');
+    iVals_delays4 = mean(cat(3, allDDiVals{days(1)}(group4,:), allDDiVals{days(2)}(group4, :)),3,'omitnan');
+
+    plotLPError(trials, iVals_delays1, "mean", 'Color', 'red')
+    hold on;
+    %plotLPError(trials, iVals_delays2, "mean", 'Color', [1, 0.5, 0])
+    %plotLPError(trials, iVals_delays3, "mean", 'Color', 'yellow')
+    plotLPError(trials, iVals_delays4, "mean", 'Color', 'blue')
+    ylim([0 6])
+    title(['Delay' num2str(delays(i)) ' Wistar High/Low F']);
+    legend('Drinkers', 'Control', 'Location','southwest')
+    hold off;
 end
 
 

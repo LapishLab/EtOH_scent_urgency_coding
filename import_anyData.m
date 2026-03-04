@@ -96,33 +96,33 @@ Weights = weights{:, contains(weights.Properties.VariableNames, "RAP")};
 %% Import Wistar RAP Data %%
 dir_path = 'E:\052224_11425_WistarUrgency\RAP\analysisData';
 days = 10;
-maxFiles = 30;
-wistar_RAP = anaRap(dir_path, days, maxFiles, fix_file = true, allData = false, sideMtx = false);
+maxFiles = 30; 
+wistar_RAP = anaRap(dir_path, days, maxFiles, fix_file = true, allData = false);
 
 %% Import Wistar RAP Renewal Data %%
 dir_path = 'E:\052224_11425_WistarUrgency\RAP\100724_Renewal\analysisData';
 days = 4;
 maxFiles = 30;
-wistar_RAP_renewal = anaRap(dir_path, days, maxFiles, allData = false, sideMtx = false);
+wistar_RAP_renewal = anaRap(dir_path, days, maxFiles, allData = false);
 
 %% Import P rat RAP Data %%
 dir_path = 'E:\072125_121225_Prat_urgency\RAP\analysisData';
 days = 10;
 maxFiles = 24;
-P_RAP = anaRap(dir_path, days, maxFiles, allData = false, sideMtx = false);
+P_RAP = anaRap(dir_path, days, maxFiles, allData = false);
 
 %% Import P rat Renewal RAP Data %%
 dir_path = 'E:\072125_121225_Prat_urgency\RAP\RAP_renewal\analysisData';
 days = 4;
 maxFiles = 24;
-P_RAP_renewal = anaRap(dir_path, days, maxFiles, allData = false, sideMtx = false);
+P_RAP_renewal = anaRap(dir_path, days, maxFiles, allData = false);
 
 %% Remove rats that didn't meet criteria %%
 % remove any rats that didn't make criteria. Only in the wistars 
 ratsOut = [17 32 47 53];
 %only remove rats from the first three variables which are total licks,
 %lick time series matrix and subject numbers matrix 
-for i = 1:3
+for i = 1:2
         %for total lick and subject number matrix
         if class(wistar_RAP{i}) == "double"
             wistar_RAP{i}(ratsOut, :) = [];
@@ -144,10 +144,13 @@ end
 %check that each of the subsequent combined datasets are in the correct
 %orientation. Subject number matrix order should match ratID order from
 %ratsInfo variable. 
-RAP_subjectNumbers = [[wistar_RAP{3} wistar_RAP_renewal{3}];[P_RAP{3} P_RAP_renewal{3}]];
+RAP_subjectNumbers = [[wistar_RAP{4} wistar_RAP_renewal{4}];[P_RAP{4} P_RAP_renewal{4}]];
 if all(RAP_subjectNumbers == repmat(ratsInfo.ratID, 1, 14), 'all') ~= true 
     warning("Individual rat data is not in the same order across experimental days")
 end
+
+%variable to hold all the side matrix pairings 
+RAP_sideMtx = [[wistar_RAP{3} wistar_RAP_renewal{3}];[P_RAP{3} P_RAP_renewal{3}]];
 
 %matrix with total licks for both wistars and Ps  
 RAP_totalLicks = [[wistar_RAP{1} wistar_RAP_renewal{1}];[P_RAP{1} P_RAP_renewal{1}]];
@@ -184,7 +187,8 @@ save("C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\E
 % subject frontloading classification per experiment day
 
 %get consumption over time data 
-consumptionOverTime = calc_cumulativeConsumption(RAP_all, RAP_lickTmSerMtx, RAP_totalLicks, "g/kg")
+time = 3600;
+consumptionOverTime = calc_cumulativeConsumption(RAP_all, RAP_lickTmSerMtx, RAP_totalLicks, cumulative_type = "licks", time = time);
 
 %experiment days to look at 
 days = [1 3 5 6 8 10 11 13];
@@ -223,7 +227,7 @@ pat = 'E:\052224_11425_WistarUrgency\Delay Discounting\DD Data\analysisData';
 %day3 is start of curve, day26 is the end
 dayNumbers = [3:26];
 %specificy which data variables you want 
-variables = ["initial latency","initial levers", "choice latency", "choice levers"];
+variables = ["choice latency", "choice levers"];
 %import data
 w_output = DDData_importAll(pat, dayNumbers, variables, removeRats = true);
 

@@ -5,7 +5,7 @@
 %time scale variable
 time = 3600;
 % calculate cumulative RAP data
-consumptionOverTime = calc_cumulativeConsumption(RAP_all, RAP_lickTmSerMtx, RAP_totalLicks, cumulative_type = "licks", time = time);
+consumptionOverTime = calc_cumulativeConsumption(RAP_all, RAP_lickTmSerMtx, RAP_totalLicks, cumulative_type = "g/kg", time = time);
 
 data = consumptionOverTime;
 

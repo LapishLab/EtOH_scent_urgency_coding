@@ -1,4 +1,4 @@
-group = ratsInfo.treatment == "EtOH" & ratsInfo.strain == "Wistar"  & ratsInfo.sex == "M" & (ratsInfo.drinkClass == "Low") %| ratsInfo.drinkClass == "High");
+group = ratsInfo.treatment == "EtOH" & ratsInfo.strain == "Wistar"  & ratsInfo.sex == "F" & (ratsInfo.drinkClass == "High"| ratsInfo.drinkClass == "Medium");
 
 
 delays = [0 1 2 4 8 16];
@@ -26,12 +26,16 @@ fig1 = figure();
 histogram(p, 'BinWidth', 0.7, 'FaceColor', [0.5 0 0.5]);
 hold on
 histogram(p2, 'BinWidth',0.7, 'FaceColor',  [0.1 0.5 0.3]);
-title("Alcohol Exposed Animals", 'FontSize', 30);
-xlabel("Cons (g/kg)", 'FontSize', 22);
-ylabel("Counts", 'FontSize', 22);
-xline(1.5, ':', 'LineWidth',2)
-xline(3.5, ':', 'LineWidth',2)
+xlabel("Cons (g/kg)", 'FontSize', 45, 'FontName', 'arial', 'FontWeight','bold');
+ylabel("Counts", 'FontSize', 45, 'FontName', 'arial', 'FontWeight','bold');
+xline(1.5, ':', 'LineWidth',3)
+xline(3.5, ':', 'LineWidth',3)
 ax = gca
-ax.FontSize = 16;
-ax.FontSize = 16;
+ax.FontSize = 30;
+ax.FontSize = 30;
 hold off
+
+%% IAP & RAP
+
+group = ratsInfo.strain == "Wistar" & ratsInfo.sex == "M" & ratsInfo.treatment == "EtOH" & (ratsInfo.drinkClass == "High"| ratsInfo.drinkClass == "Medium");
+p = RAP_totalLicks(group,[1 3 5 6 8 10]);
