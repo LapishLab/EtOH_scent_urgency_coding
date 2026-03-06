@@ -1,13 +1,26 @@
 
 %initialize variables
+%pull out the data for wistars (row 1) or P rats (row 2)
+sideMtx = RAP_sideMtx(2,[1 3 5 6 8 10]);
 
-sideMtx = RAP_sideMtx(2,1:10)
-
+%pull out ethanol and water animal subject numbers to compare to subject
+%numbers in the box to determine what each animals reinforcer was. 
 EtOH_animals = ratsInfo.ratID(ratsInfo.treatment == "EtOH");
 water_animals = ratsInfo.ratID(ratsInfo.treatment == "Control");
 
 %RAP_all = table2array(RAP_all);
-RAP_subjects = repmat(ratsInfo.ratID(:), 1, 14);
+RAP_subjects = repmat(ratsInfo.ratID(:), 1, 6);
+
+data = [];
+%specify which data to look at 
+%frontloading slopes (only have it for EtOH days in RAP)
+% data = slope1; 
+% total g/kg cons. Have to pull out only the EtOH days 
+data = table2array(RAP_all(:, [1 3 5 6 8 10]));
+% g/kg/lick. Have to pull out only the EtOH days
+% make any infinity values from not recording any licks set to 0 
+% data = table2array(RAP_all(:, [1 3 5 6 8 10])./RAP_totalLicks(:,[1 3 5 6 8 10]));
+% data(isinf(data)) = 0;
 
 %Cycle through each box pairing from RAP_sideMtx. Determine what the pairing of the 
 %subjects is (EtOH_EtOH, EtOH_water, by themselves water or etoh). Assign the subject
@@ -33,22 +46,22 @@ for i = 1:numel(sideMtx)
         dayPairs = sideMtx{i};
         %pull out subject numbers
         subNum = dayPairs(rat,~isnan(dayPairs(rat,:)));
+        %only pull out the data I am interested in looking at 
 
-       
-
+      
         % --- Data for unpaired animals --- %
         %determine if rats were alone in the box or paired with another rat
         %rat was by itself if a nan was present in the other box location
 
         if any(isnan(dayPairs(rat,:)))
             sub_loc = RAP_subjects(:,i) == subNum;
-            % --- Data for mixed EtOH and water pairings --- %
-            if any(ismember(subNum, water_animals))
-                lone_water = [lone_water; RAP_all(sub_loc, i) RAP_totalLicks(sub_loc, i)];
+            %data for mixed EtOH and water pairings
+            if ismember(subNum,water_animals)
+                lone_water = [lone_water; data(sub_loc, i)];
                 lone_water_subjects = [lone_water_subjects;subNum];
                 %add subject number and data to matrix for EtOH animals
             elseif ismember(subNum, EtOH_animals)
-                lone_EtOH = [lone_EtOH; RAP_all(sub_loc, i) RAP_totalLicks(sub_loc, i)];
+                lone_EtOH = [lone_EtOH; data(sub_loc, i)];
                 lone_EtOH_subjects = [lone_EtOH_subjects;subNum];
             end
 
@@ -61,46 +74,65 @@ for i = 1:numel(sideMtx)
                 %pulling out data for mixed etoh and water pairings. Only
                 %the water animals 
                 if sum(ismember(subNum, water_animals)) == 1 & ismember(subNum(m), water_animals)
-                    mixPair_water = [mixPair_water; RAP_all(sub_loc, i) RAP_totalLicks(sub_loc, i)];
+                    mixPair_water = [mixPair_water; data(sub_loc, i)];
                     mixPair_water_subjects = [mixPair_water_subjects;subNum(m)];
                 %pulling out data for mixed etoh and water pairings. Only
                 %the etoh animals 
                 elseif sum(ismember(subNum, water_animals)) == 1 & ismember(subNum(m), EtOH_animals)
-                    mixPair_EtOH = [mixPair_EtOH; RAP_all(sub_loc, i) RAP_totalLicks(sub_loc, i)];
+                    mixPair_EtOH = [mixPair_EtOH; data(sub_loc, i)];
                     mixPair_EtOH_subjects = [mixPair_EtOH_subjects;subNum(m)];
-                    %pulling out data for only EtOH paired animals
+                %pulling out data for only EtOH paired animals
                 elseif all(ismember(subNum, EtOH_animals))
-                    EtOH_pairs = [EtOH_pairs; RAP_all(sub_loc, i) RAP_totalLicks(sub_loc, i)];
+                    EtOH_pairs = [EtOH_pairs; data(sub_loc, i)];
                     EtOH_pairs_subjects = [EtOH_pairs_subjects;subNum(m)];
-                    %pulling out data for only water paired animals
+                %pulling out data for only water paired animals
                 elseif all(ismember(subNum, water_animals))
-                    water_pairs = [water_pairs; RAP_all(sub_loc, i) RAP_totalLicks(sub_loc, i)];
-                    water_pairs_subjects = [EtOH_pairs_subjects;subNum(m)];
+                    water_pairs = [water_pairs; data(sub_loc, i)];
+                    water_pairs_subjects = [water_pairs_subjects;subNum(m)];
                 end
             end
         end
      end
-     EtOH_pairs_all{i} = EtOH_pairs;
+     %add subjects for each day to an overall 'all' variable
+     %ethanol subject numbers
      EtOH_pairs_subjects_all{i} = EtOH_pairs_subjects;
-     mixPair_EtOH_all{i} = mixPair_EtOH;
      mixPair_EtOH_subjects_all{i} = mixPair_EtOH_subjects; 
+     lone_EtOH_subjects_all{i} = lone_EtOH_subjects;
+
+     %water subject numbers
+     water_pairs_subjects_all{i} = water_pairs_subjects;
+     mixPair_water_subjects_all{i} = mixPair_water_subjects;
+     lone_water_subjects_all{i} = lone_water_subjects;
+
+     %ethanol animal data
+     EtOH_pairs_all{i} = EtOH_pairs;
+     mixPair_EtOH_all{i} = mixPair_EtOH;
+     lone_EtOH_all{i} = lone_EtOH;
+     %water animal data
+     water_pairs_all{i} = water_pairs;
+     mixPair_water_all{i} = mixPair_water;
+     lone_water_all{i} = lone_water;
 end
 
 %% Pull out grouped data %%
 
 %grouped ratIDs
-rats = ratsInfo.ratID(ratsInfo.treatment == "EtOH" & ratsInfo.strain == "P" & ratsInfo.sex == "F") %& (ratsInfo.drinkClass == "High" | ratsInfo.drinkClass == "Medium"));
+rats = ratsInfo.ratID(ratsInfo.treatment == "EtOH" & ratsInfo.strain == "P" & ratsInfo.sex == "M") %& (ratsInfo.drinkClass == "High" | ratsInfo.drinkClass == "Medium"));
 
-data = [];
-toAnalyze = mixPair_EtOH_all;
-toAnalyze_subjects = mixPair_EtOH_subjects_all;
+groupData = [];
+toAnalyze = EtOH_pairs_all;
+toAnalyze_subjects = EtOH_pairs_subjects_all;
 
 for i = 1:numel(sideMtx)
     %pull out the rats that are found in both the pairings I am interested
     %in and the ratsInfo group
     groupRats = [];
     groupRats = ismember(toAnalyze_subjects{i}, rats);
-    %pull out the g/kg data for just the rats that are in groupRats
-    dayData = toAnalyze{i}(groupRats, 1);
-    data = [data;mean(dayData, 'omitnan')];
+    if ~isempty(groupRats) 
+        %pull out the g/kg data for just the rats that are in groupRats
+        dayData = toAnalyze{i}(groupRats, 1);
+        groupData = [groupData;mean(dayData, 'omitnan')];
+    else
+        groupData = [groupData;NaN];
+    end 
 end 

@@ -3,13 +3,14 @@
 %% Calculate data for each rat
 
 %time scale variable
-time = 3600;
+time = 30;
 % calculate cumulative RAP data
-consumptionOverTime = calc_cumulativeConsumption(RAP_all, RAP_lickTmSerMtx, RAP_totalLicks, cumulative_type = "g/kg", time = time);
+%consumptionOverTime = calc_cumulativeConsumption(RAP_all, RAP_lickTmSerMtx, RAP_totalLicks, cumulative_type = "g/kg", time = time);
+%data = consumptionOverTime;
+%days = [1 3 5 6 8 10];
 
-data = consumptionOverTime;
-
-days = [1 3 5 6 8 10];
+data = allDDiVals;
+days = [1:24];
 
 all_results = {};
 all_p_slopeDiff = [];
@@ -30,7 +31,7 @@ for i = 1:numel(days)
         try 
             %calculate and assess fit of piecewise linear function onto
             %data
-            [nm, vals, fitResult, gof, pv] = getPwlSlopesDD(data{days(i)}(j,:)', yintercept=0);
+            [nm, vals, fitResult, gof, pv] = getPwlSlopesDD(data{days(i)}(j,:)', yintercept=3);
             res(j,:) = [vals(1) vals(2) vals(3) pv]; %[slope 1, slope 2, knot, pval]
             %calculate if slope1 is significantly greater than slope2 
             p(j,:) = compare_slopes(data{days(i)}(j,:),vals, fitResult, time);
@@ -76,7 +77,7 @@ slope1 = [];
 slope2 = [];
 %pull out slope1 and slope2 in separate variables 
 for i = 1:numel(all_results)
-    slope1 = [slope1 all_results{i}(:, 1)];
+    slope2 = [slope2 all_results{i}(:, 2)];
 end 
 
 
