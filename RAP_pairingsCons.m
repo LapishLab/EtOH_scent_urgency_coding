@@ -1,7 +1,10 @@
 
+%what experimental days do you want to look at 
+days = [6 8 10];
+
 %initialize variables
 %pull out the data for wistars (row 1) or P rats (row 2)
-sideMtx = RAP_sideMtx(1,[6 8 10]);
+sideMtx = RAP_sideMtx(2,days);
 
 %pull out ethanol and water animal subject numbers to compare to subject
 %numbers in the box to determine what each animals reinforcer was. 
@@ -9,17 +12,19 @@ EtOH_animals = ratsInfo.ratID(ratsInfo.treatment == "EtOH");
 water_animals = ratsInfo.ratID(ratsInfo.treatment == "Control");
 
 %RAP_all = table2array(RAP_all);
-RAP_subjects = repmat(ratsInfo.ratID(:), 1, 6);
+RAP_subjects = repmat(ratsInfo.ratID(:), 1, numel(days));
 
 data = [];
 %specify which data to look at 
 %frontloading slopes (only have it for EtOH days in RAP)
 % data = slope1; 
+
 % total g/kg cons. Have to pull out only the EtOH days 
-data = RAP_all(:, [1 3 5 6 8 10]);
+data = RAP_all(:, days);
+
 % g/kg/lick. Have to pull out only the EtOH days
 % make any infinity values from not recording any licks set to 0 
-% data = table2array(RAP_all(:, [1 3 5 6 8 10])./RAP_totalLicks(:,[1 3 5 6 8 10]));
+% data = RAP_all(:, days)./RAP_totalLicks(:,days);
 % data(isinf(data)) = 0;
 
 %initialize variables
@@ -118,14 +123,25 @@ end
 %% Within-subject Comparisons Across Pairings %%
 
 %average the data within subjects for each EtOH-EtOH paired animal
-[samePair_avg_data, samePair_avg_subjects] = RAP_pairs_avg_subject(water_pairs, water_pairs_subjects);
+[samePair_avg_data, samePair_avg_subjects, samePair_sum_pairs] = RAP_pairs_avg_subject(EtOH_pairs, EtOH_pairs_subjects);
 
 %average the data within subject for each EtOH-H2O paired animal 
-[mixPair_avg_data, mixPair_avg_subjects] = RAP_pairs_avg_subject(mixPair_water, mixPair_water_subjects);
+[mixPair_avg_data, mixPair_avg_subjects, mixPair_sum_pairs] = RAP_pairs_avg_subject(mixPair_EtOH, mixPair_EtOH_subjects);
 
 %pull out ratIDs of group that you want to look at 
-rats = ratsInfo.ratID(ratsInfo.treatment == "Control" & ratsInfo.strain == "Wistar" & ratsInfo.sex == "F") %& (ratsInfo.drinkClass == "High" | ratsInfo.drinkClass == "Medium"));
+rats = ratsInfo.ratID(ratsInfo.treatment == "EtOH" & ratsInfo.strain == "P" & ratsInfo.sex == "F"); %& (ratsInfo.drinkClass == "High" | ratsInfo.drinkClass == "Medium"));
 
+%% Betwen subjects %%
+%match group rats to the rats in the data
+[~, same_group_loc, ~] = intersect(samePair_avg_subjects, rats);
+same_group_data = samePair_avg_data(same_group_loc);
+
+[~, mix_group_loc, ~] = intersect(mixPair_avg_subjects, rats);
+mix_group_data = mixPair_avg_data(mix_group_loc);
+
+
+
+%% Within Subject Data %%
 within_pairs_data = []; 
 within_subjects = [];
 
@@ -134,7 +150,7 @@ for i = 1:numel(rats)
     loc2 = rats(i) == mixPair_avg_subjects;
     if any(loc1) & any(loc2)
         within_subjects = [within_subjects; rats(i)] ;
-        within_pairs_data = [within_pairs_data; EtOH_avg_data(loc1) mixPair_EtOH_avg_data(loc2)];
+        within_pairs_data = [within_pairs_data; mixPair_avg_data(loc2) samePair_avg_data(loc1) ];
     end 
 end 
 
@@ -142,7 +158,7 @@ end
 %% Pull out grouped data %%
 
 %grouped ratIDs
-rats = ratsInfo.ratID(ratsInfo.treatment == "EtOH" & ratsInfo.strain == "Wistar" & ratsInfo.sex == "M") & (ratsInfo.drinkClass == "High" | ratsInfo.drinkClass == "Medium"));
+rats = ratsInfo.ratID(ratsInfo.treatment == "EtOH" & ratsInfo.strain == "P" & ratsInfo.sex == "M") %& (ratsInfo.drinkClass == "High" | ratsInfo.drinkClass == "Medium"));
 
 groupData = [];
 toAnalyze = EtOH_pairs_all;

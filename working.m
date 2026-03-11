@@ -1,10 +1,9 @@
 group = ratsInfo.treatment == "EtOH" & ratsInfo.strain == "P"  & ratsInfo.sex == "F" %& (ratsInfo.drinkClass == "High"| ratsInfo.drinkClass == "Medium");
 
-
 delays = [0 1 2 4 8 16];
 %CHANGE THIS%
-%tocalc = slope2(group,:);
-tocalc = slope1(group,:)-slope2(group,:);
+tocalc = slope2(group,:);
+%tocalc = slope1(group,:)-slope2(group,:);
 
 data = [];
 firstTwo = [];

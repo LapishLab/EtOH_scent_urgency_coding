@@ -2,13 +2,13 @@
 
 %% Calculate data for each rat
 
-%time scale variable
-time = 30;
 % calculate cumulative RAP data
-%consumptionOverTime = calc_cumulativeConsumption(RAP_all, RAP_lickTmSerMtx, RAP_totalLicks, cumulative_type = "g/kg", time = time);
-%data = consumptionOverTime;
-%days = [1 3 5 6 8 10];
+% time = 3600
+% consumptionOverTime = calc_cumulativeConsumption(RAP_all, RAP_lickTmSerMtx, RAP_totalLicks, cumulative_type = "g/kg", time = time);
+% data = consumptionOverTime;
+% days = [1 3 5 6 8 10];
 
+time = 30;
 data = allDDiVals;
 days = [1:24];
 
