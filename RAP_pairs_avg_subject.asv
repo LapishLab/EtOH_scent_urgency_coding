@@ -28,16 +28,16 @@ for i = 1:numel(summary_subjects)
     perSubject_data = data(match);
     %calculate the mean of the data if there are multiple data points and
     %add to matrix or add all data points individually 
-    % if opts.avg_data
+    if opts.avg_data
         avg_data = [avg_data; mean(perSubject_data, 'omitnan')];
         sum_pairs = [sum_pairs; sum(match)];
         avg_subjects = [avg_subjects; summary_subjects(i)];
-    % elseif ~opts.avg_data 
-    %     avg_data = [avg_data; perSubject_data];
-    %     sum_pairs = 0; %do not need this variable if not averaging the subjects
-    %     avg_subjects = [avg_subjects; all_subjects(match)];
-    % end 
+    elseif ~opts.avg_data 
+        avg_data = [avg_data; perSubject_data];
+        sum_pairs = 0; %do not need this variable if not averaging the subjects
+        avg_subjects = [avg_subjects; all_subjects(match)];
+    end 
 
-    % sum_pairs = [sum_pairs; sum(match)];
-    % avg_subjects = [avg_subjects; summary_subjects(i)];
+    sum_pairs = [sum_pairs; sum(match)];
+    avg_subjects = [avg_subjects; summary_subjects(i)];
 end
