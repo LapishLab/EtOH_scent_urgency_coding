@@ -40,7 +40,6 @@ choice_latency = {};
 init_levers = {};
 choice_levers = {};
 
-
 %% Fill variables with Data %%  
 %Change numbers in the for loop depending on how many days you have
 for day = 1:numel(dayNumbers);
@@ -84,6 +83,7 @@ for day = 1:numel(dayNumbers);
     choice_latency_ind = nan(size(allData{day},1),30);
     init_levers_ind = nan(size(allData{day},1),30);
     choice_levers_ind = nan(size(allData{day},1),30);
+
     %add a for loop for creating a vector of iValues for each rat from
     %their choice trials
     for rat = 1:size(allData{day},1);
@@ -137,6 +137,8 @@ for day = 1:numel(dayNumbers);
     choice_latency{day} = choice_latency_ind;
     init_levers{day} = init_levers_ind;
     choice_levers{day} = choice_levers_ind;
+
+
 end; 
 
 %% Determine output variables %%
@@ -158,15 +160,19 @@ if any(contains(variables, "date", 'IgnoreCase', true))
     loc = contains(variables, "date", 'IgnoreCase', true);
     output{loc} = day_dates;
 end
-if any(contains(variables, "choice", 'IgnoreCase', true))
+if any(contains(variables, "choice", 'IgnoreCase', true) & contains(variables, "lat", 'IgnoreCase', true));
     loc_lat = contains(variables, "choice", 'IgnoreCase', true) & contains(variables, "lat", 'IgnoreCase', true);
     output{loc_lat} = choice_latency;
+end 
+if any(contains(variables, "choice", 'IgnoreCase', true) & contains(variables, "lev", 'IgnoreCase', true))
     loc_levers = contains(variables, "choice", 'IgnoreCase', true) & contains(variables, "lev", 'IgnoreCase', true);
     output{loc_levers} = choice_levers;
 end
-if any(contains(variables, "init", 'IgnoreCase', true))
+if any(contains(variables, "init", 'IgnoreCase', true) & contains(variables, "lat", 'IgnoreCase', true))
     loc_lat = contains(variables, "init", 'IgnoreCase', true) & contains(variables, "lat", 'IgnoreCase', true);
     output{loc_lat} = init_latency;
+end 
+if any(contains(variables, "init", 'IgnoreCase', true) & contains(variables, "lev", 'IgnoreCase', true))
     loc_levers = contains(variables, "init", 'IgnoreCase', true) & contains(variables, "lev", 'IgnoreCase', true);
     output{loc_levers} = init_levers;
 end

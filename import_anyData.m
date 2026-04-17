@@ -218,38 +218,60 @@ end
 
 
 
-%% Import DD Curve Data %%
+%% Import DD Data %%
+
+%specificy which data variables you want 
+variables = ["allDDiVals"];
 
 % --- Wistar Data --- % 
+% DD Curve: different location, day 3 to day 26
 %path to files. must be char not string
 pat = 'E:\052224_11425_WistarUrgency\Delay Discounting\DD Data\analysisData';
 %experiment days to import
-%day3 is start of curve, day26 is the end
-dayNumbers = [3:26];
-%specificy which data variables you want 
-variables = ["choice latency", "choice levers"];
+%DD Curve: day3 is start of curve, day26 is the end
+dayNumbers = 3:26;
 %import data
-w_output = DDData_importAll(pat, dayNumbers, variables, removeRats = true);
+w_curve_output = DDData_importAll(pat, dayNumbers, variables, removeRats = true);
+
+% DD Testing: different location, day 1 to day 24
+%path to files. must be char not string
+pat = 'E:\052224_11425_WistarUrgency\Delay Discounting\DD Data\analysisData\ScentWeek';
+% DD Testing: day 1 to day 10 is scents, day 11 to 15 is ROT
+dayNumbers = 1:15;
+%import data
+w_test_output = DDData_importAll(pat, dayNumbers, variables, removeRats = true);
 
 % --- P Data --- %
 %path to files. must be char not string
 pat = 'E:\072125_121225_Prat_urgency\DD\analysisData';
 %experiment days to import
-%day12 is start of curve. day35 is the end
+%DD Curve: day12 is start of curve. day35 is the end
 dayNumbers = [12:35];
 %import data
-p_output = DDData_importAll(pat, dayNumbers, variables);
+p_curve_output = DDData_importAll(pat, dayNumbers, variables);
+
+%path to files. must be char not string
+pat = 'E:\072125_121225_Prat_urgency\DD\testingWeek\analysisData';
+%experiment days to import
+%DD testing: day 1 to 10 is scent weeks, day 11 to 15 is ROT week, day 15
+%to 24 is USV replay 
+dayNumbers = [1:24];
+%import data
+p_test_output = DDData_importAll(pat, dayNumbers, variables);
 
 % --- Combine Together --- %
 %initialize variables to hold everything
-all_output = cell(size(w_output));
+%all_output = cell(size(p_test_output));
+all_output = cell(1, numel(days));
+days = [11:15];
+
 
 %add the allData and allDDiVals together since they are in cell arrays
-for i = 1:numel(w_output)
-    all_output{i} = cell(size(w_output{i}));
-    for m = 1:numel(w_output{i})
-        all_output{i}{m} = [w_output{i}{m};p_output{i}{m}];
-    end
+for i = 1:numel(days)
+    all_output{i} = [w_test_output{1}{days(i)};p_test_output{1}{days(i)}];
+    % for m = 1:numel(w_output{i})
+    %     all_output{i}{m} = [w_output{i}{m};p_output{i}{m}];
+    % end
 end; 
 
 %add the lastTenDDiVals variables together since they are doubles 

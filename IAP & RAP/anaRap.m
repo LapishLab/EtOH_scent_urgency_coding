@@ -38,7 +38,6 @@ for i = 1:days;
     data = importMA_blockArray_Batch(pat);
     %fixes the medPC file for 18 so that all the correct data from 18 is in
     %the 18 16 file
-    % comment this area out if you don't need it! 
     if i == 1 && opts.fix_file == true
        [data] = fixRAPMedPCFile(data);
     end; 

@@ -114,76 +114,105 @@ fig2.XLabel.String = "Trials";
 lgd = legend("H2O", "Frontloader", "NonLoaders")
 hold off; 
 
-%% Graphing iVals Across Trials for ROT
+%% Graphing iVals Across Trials for ROT %%
 % graphs the mean of each trial for each group with error bars
-% input variables: TallDDiVals, ratsInfo
+% input variables: ratsInfo, 5 days of ROT
 
 %create new figure
-fig1 = tiledlayout(1,5)
+fig1 = tiledlayout(1,5);
 
-group1_index = ratsInfo.Sex == "F" & ratsInfo.Trtm == "EtOH"
-group3_index = ratsInfo.Sex == "F" & ratsInfo.Trtm == "Control"
-group1= {};
-group1_ratIDs = [];
-group2 = {};
-group3 = {};
-group3_ratIDs = [];
+%groups to graph together. CHANGE as NEEDED
+group1 = ratsInfo.strain == "Wistar" & ratsInfo.sex == "M" & ratsInfo.treatment == "Control"% & (ratsInfo.drinkClass == "High" | ratsInfo.drinkClass == "Medium");
+group2 = ratsInfo.strain == "P" & ratsInfo.sex == "M" & ratsInfo.treatment == "Control"; %& (ratsInfo.drinkClass == "High" | ratsInfo.drinkClass == "Medium");M%group3 = ratsInfo.strain == "Wistar" & ratsInfo.sex == "M" & ratsInfo.treatment == "EtOH" & (ratsInfo.drinkClass == "Low");
+
+%variable to hold the data you are graphing. data should be formatted as a
+%cell with each cell holding all the information for that day 
+data = all_output;
+
+trials = 1:30;
 
 %ROT days in the allDDiVals variable. Week after the scent weeks
-days = [11:15]
+days = [1:5]
 %for loop that goes through 
-for i = 1:length(days);
-    %grouped animals for the graphing. Change as needed
-    group1{i} = allDDiVals{days(i)}(group1_index, :); % & ratsInfo.Trtm == "EtOH", :);
-    group1_ratIDs = [group1_ratIDs ratsInfo.ratID(group1_index)]; % & ratsInfo.Trtm == "EtOH")]
-    %group2{i} = allDDiVals{days(i)}(ratsInfo.Sex == "M" & ratsInfo.Trtm == "EtOH", :);
-    group3{i} = allDDiVals{days(i)}(group3_index, :); % & ratsInfo.Trtm == "EtOH", :);
-    group3_ratIDs = [group3_ratIDs ratsInfo.ratID(group3_index)]
-
+for i = 1:numel(days);
+    
     %plot the groups 
-    nexttile
+    %nexttile
     hold on;
-    M = plotLPError(trials, group1{i}, "mn", 'o-', 'Color', 'red');
-    %F = plotLPError(trials, group2{i}, "mn", 'x-', 'Color', 'magenta')
-    WC = plotLPError(trials, group3{i}, "mn", 'x-', 'Color', 'blue');
-    ylim([0 6]);
+    M = plot(trials,  calc_choiceProbability(data{i}(group1,:)), 'o-', 'Color', 'blue');
+    WC = plot(trials, calc_choiceProbability(data{i}(group2,:)), 'x-', 'Color', 'red');
+    %P = plot(trials, calc_choiceProbability(data{i}(group3,:)), 'x-', 'Color', 'black');
+    if i == 3 | i == 5
+        xline(10);
+        xline(15);
+    end 
+    legend("wistar", "P");
+    title("ROT day1, males");
+    ylabel("% Immediate Trials");
+    ylim([0 1]);
     hold off; 
+    close(gcf)
 end;
 
 %add specifying information for the whole graph 
-fig1.Title.String = "Male ROT";
+fig1.Title.String = "Wistar Female ROT, Includes high/low EtOH group";
 fig1.YLabel.String = "iValue";
 fig1.XLabel.String = "Trials";
-lgd = legend("EtOH", "Control "); 
+lgd = legend("Control", "EtOH Drinkers", "EtOH NonDrinkers"); 
 
-close(gcf)
+%% Plotting combined ROT Data across trials %%
+% Combining ROT data from wednesday and friday into one and graph the
+% combined data across trials 
+% inputs needed: choice lever choices for only choice trials on the full week of ROT, ratsInfo 
+
+data = all_output;
+
+%groups of interest. Change the number of groups as needed 
+group1 = ratsInfo.strain == "P" & ratsInfo.sex == "F" & ratsInfo.treatment == "Control"; %& (ratsInfo.drinkClass == "High" | ratsInfo.drinkClass == "Medium");
+group2 = ratsInfo.strain == "P" & ratsInfo.sex == "F" & ratsInfo.treatment == "EtOH" %& (ratsInfo.drinkClass == "High" | ratsInfo.drinkClass == "Medium");
 
 
-%get data for prism graphing 
+%concatenate data on top of each other 
+dayBefore_data1 = org_ROTdata(data, group1, [1:2]);
+ROT_data1 = org_ROTdata(data, group1, [3 5]);
 
-baseline_males = nanmean(cat(3, group1{1}, group1{2}), 3);
-baseline_females = nanmean(cat(3, group3{1}, group3{2}), 3);
-ROT_males = nanmean(cat(3, group1{3}, group1{5}), 3);
-ROT_females = nanmean(cat(3, group3{3}, group1{5}), 3);
+dayBefore_data2 = org_ROTdata(data, group2, [1:2]);
+ROT_data2 = org_ROTdata(data, group2, [3 5]);
 
-fig2 = tiledlayout(1,2)
-nexttile
-plotLPError(trials, baseline_males, "mn", 'o-', 'Color', 'blue');
-hold on;
-plotLPError(trials, baseline_females, "mn", 'o-', 'Color', 'red');
-ylim([0 6]);
-title("ROT Male Baseline");
-legend(["EtOH" "Control"]);
-hold off; 
+%calculate the mean and SEM
+[percentImmediate1, group1_binomalMean, group1_SEM, n1] = calc_choiceProbability(ROT_data1);
+[percentImmediate2, group2_binomalMean, group2_SEM, n2] = calc_choiceProbability(ROT_data2);
 
-nexttile
-plotLPError(trials, ROT_males, "mn", 'o-', 'Color', 'red');
-hold on;
-plotLPError(trials, ROT_females, "mn", 'o-', 'Color', 'blue');
-ylim([0 6])
-title("ROT Male Testing")
-legend(["EtOH" "Control"])
-hold off; 
+chiSquareResults = [];
+
+%Calculate the chi-square probability comparison
+for i = 1:numel(percentImmediate1)
+    [h,p, chi2stat,df] = prop_test([group1_binomalMean(i) group2_binomalMean(i)], [n1(i) n2(i)], true);
+    % Store the chi-square results for each day
+    chiSquareResults(i, :) = [h, p, chi2stat, df];
+end 
+
+sig_difference = find(chiSquareResults(:,1));
+
+%Pull out the areas where there is a significant difference 
+
+%plot with errorbars 
+g1 = errorbar(percentImmediate1, group1_SEM, 'x-', 'Color', 'blue');
+hold on 
+
+g2 = errorbar(percentImmediate2, group2_SEM, 'o-', 'Color', 'red');
+
+plot(sig_difference,zeros(numel(sig_difference)), 'r*')
+xline([10 15])
+ylabel("Binomal Mean of Immediate Choices")
+xlabel("Trials")
+title("ROT immediate choices across trials, ROT days, wistar females, chi-square differences between groups")
+legend("Control", "EtOH");
+hold off 
+
+
+
+
 
 
 %% Plot IValue Across trials per Day 
