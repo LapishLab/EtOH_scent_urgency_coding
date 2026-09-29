@@ -1,127 +1,163 @@
 % This script requires https://github.com/raacampbell/shadedErrorBar
-% Navigate to export directory before running script
-export_path = uigetdir();
-export_csv = fullfile(export_path, "export.csv");
+%first import USV data 
 
-%% load table, force all variables as string to prevent issueTimes from getting formatted weird
-opts = detectImportOptions(export_csv, Delimiter=",");
-opts = setvartype(opts, opts.SelectedVariableNames, 'string');
-t = readtable(export_csv, opts);
-%% Remove any rows which didn't have exports
-% maybe add removing single rats? will make medPC parser faster 
-t = t(~cellfun(@isempty, t.export_path), :);
+%% Fix DD Subjects
 
-%% load all call tables into this session table
-% For portability get the path relative to the
-% export director, instead of using the raw original export path.
-[~, mat_names, ext] = fileparts(t.export_path);
-local_mat_paths = fullfile(export_path, mat_names+ext);
-% Load just the calls. Currently, I have no need for audio_file_info
-load_fun = @(x) load(x).calls;
-t.calls = cellfun(load_fun, local_mat_paths, UniformOutput=false);
+%scent week 
+day = "20251106";
+old_subject = 97;
+new_subject = 67;
+ind_group = 1;
+t = fix_DD_subjects(t, day, ind_group, old_subject, new_subject);
 
-%% remove any files with no calls FOR NOW
-t = t(~cellfun(@isempty, t.calls), :);
+day = "20251107";
+old_subject = 86;
+new_subject = 59;
+ind_group = 3;
+t = fix_DD_subjects(t, day, ind_group, old_subject, new_subject);
 
-%% Synchronize time
-% audio time
-% time 0 is start of the file when started on the Pis 
-[~,id,~] = fileparts(t.export_path);
-time_string = extractBefore(id, 16);
-audio_datetime = datetime(time_string, InputFormat="uuuuMMdd_HHmmss");
-audio_time = timeofday(audio_datetime);
+day = "20251114";
+old_subject = 95;
+new_subject = 98;
+ind_group = 4;
+t = fix_DD_subjects(t, day, ind_group, old_subject, new_subject);
 
-% issue time
-% when MedPC boxes were issued 
-t.issueTime = pad(t.issueTime, 6, 'left','0');
-issue_time = timeofday(datetime(t.issueTime, InputFormat="HHmmss"));
+day = "20241022";
+old_subject = 12;
+new_subject = 15;
+ind_group = 3;
+t = fix_DD_subjects(t, day, ind_group, old_subject, new_subject);
 
-%add dates to of files to tables
-audio_datetime.Format = 'yyyyMMdd';
-t.date = audio_datetime;
+%% Frequency Thresholds %%
 
-%% find audio offset time and shift (ONLY RUN ONCE)
-% time distance between pi start and medPC issue 
-% maybe change? 
-audio_offset = seconds(audio_time-issue_time);
-for i=1:height(audio_offset)
-    calls = t.calls{i};
-    calls.Box(:,1) = calls.Box(:,1) + audio_offset(i);
+%RAP thresholds
+sad_threshold = 33*1000;
+happy_threshold = 52*1000;
 
-    add_offset = @(x) x + audio_offset(i);
-    calls.ridge_time = cellfun(add_offset, calls.ridge_time, 'UniformOutput', false);
-    t.calls{i} = calls;
-end
+%DD thresholds 
+DD_threshold_happy = 46 * 1000;
+DD_threshold_sad = 30 * 1000;
 
-%% Calculating mean call frequency %%
-%add frequency to the calls 
-for i = 1:height(t)
-    calls = t.calls{i};
-    call_freq = cellfun(@mean, calls.ridge_frequency);
-    calls.frequency = call_freq;
-    t.calls{i} = calls;
+
+%% File Time Cutoff %% 
+ 
+DD_sessionTime = -1*60:10:22*60;
+RAP_sessionTime = -1*60:10:60*60;
+
+%% DD: Remove Noise USVs 
+DD_removeUSV = [43*1000 45*1000;35*1000 36*1000];
+
+remove_calls = [];
+
+for a = 1:height(t)
+    %calls for each file
+    calls = t.calls{a};
+
+    %pick out which calls are within the DD noise bands. No anticipatory
+    %USVs, only those when the DD task is running 
+    meets_threshold = (isInRange(calls.frequency, DD_removeUSV(1,1), DD_removeUSV(1,2)) | isInRange(calls.frequency, DD_removeUSV(2,1), DD_removeUSV(2,2))) & calls.Box(:,1) >= 0;
+
+    %only keep calls that aren't within the range
+    calls_removed_noise = calls(~meets_threshold, :);
+
+    %resave the calls table with the noise removed
+    t.calls{a} = calls_removed_noise;
 end 
 
 %% Bin average USV rate and frequency
 
 %amount of the file to include. Based on audio offset time calculated for
 %the files 
-edges = -1*60 : 10 : 22*60; 
+edges = DD_sessionTime; 
 tdif = diff(edges(1:2));
 
-sad_threshold = 38*1000;
-happy_threshold = 46*1000;
+%CHANGE THIS!! usv rate bins 
+thresholds = {[0 DD_threshold_sad], [DD_threshold_happy 100*1000]};
 
-usv_rate = nan(height(t), length(edges)-1);
+usv_rate = {};
 usv_freq = usv_rate;
-for i=1:height(t)
-    % --- get usv rate --- %
-    calls = t.calls{i};
-    %if you want to keep only USVs of a certain frequency 
-    meets_threshold = calls.frequency == calls.frequency;
+% get rates across multiple bins 
+for a = 1:numel(thresholds)
+    %prealocate size of variable to hold USV rates
+    %usv_rate{a} = nan(height(t), length(edges)-1);
+    usv_rate{a} = {};
 
-    % find mean of all the time points of each pixel in a squeak 
-    call_times = cellfun(@mean, calls.ridge_time(meets_threshold));
-    % number of USV counts in each time bin / total time = percentage of
-    % total squeaks in the file in each time bin 
-    usv_rate(i,:) = histcounts(call_times, edges) / tdif;
+    for i=1:height(t)
+        % --- get usv rate --- %
+        calls = t.calls{i};
+        %if you want to keep only USVs of a certain frequency 
+        meets_threshold = isInRange(calls.frequency, thresholds{a}(1), thresholds{a}(2));
 
-    % --- get usv frequency --- %
-    % find mean frequency of each pixel of a squeak, in Hz not KHz
-    call_freq = cellfun(@mean, calls.ridge_frequency(meets_threshold));
-    % find which time bins have calls in them. Tin bins without calls
-    % (should be mainly those at the start and end) are labeled as NaNs 
-    binIndices = discretize(call_times, edges);
-    outside_edges = isnan(binIndices);
-    %keep only the data that is in time bins where calls are present 
-    call_freq = call_freq(~outside_edges);
-    binIndices=binIndices(~outside_edges);
-    
-    %find average squeak frequency in each time bin 
-    sz = [length(edges)-1, 1];
-    avg =  @(x) mean(x, 'omitnan');
-    usv_freq(i,:) = accumarray(binIndices, call_freq, sz, avg, NaN);
-end
+        % find mean of all the time points of each pixel in a squeak 
+        call_times = cellfun(@mean, calls.ridge_time(meets_threshold));
+        % number of USV counts in each time bin / total time = percentage of
+        % total squeaks in the file in each time bin
+        bin_counts = histcounts(call_times, edges);
+        usv_rate{a}{i} = histcounts(call_times, edges) / tdif;
+
+        % % --- get usv frequency --- %
+        % % find mean frequency of each pixel of a squeak, in Hz not KHz
+        % call_freq = cellfun(@mean, calls.ridge_frequency(meets_threshold));
+        % % find which time bins have calls in them. Tin bins without calls
+        % % (should be mainly those at the start and end) are labeled as NaNs
+        % binIndices = discretize(call_times, edges);
+        % outside_edges = isnan(binIndices);
+        % %keep only the data that is in time bins where calls are present
+        % call_freq = call_freq(~outside_edges);
+        % binIndices=binIndices(~outside_edges);
+        %
+        % %find average squeak frequency in each time bin
+        % sz = [length(edges)-1, 1];
+        % avg =  @(x) mean(x, 'omitnan');
+        % usv_freq(i,:) = accumarray(binIndices, call_freq, sz, avg, NaN);
+    end
+end 
+
+
 sem = @(x) std(x, 'omitnan')/sqrt(sum(~isnan(x(:,1))));
 avg_nan = @(x) mean(x, 'omitnan');
 
+%% Grouping: RAP renewal 
+renewal_P = ["20251027" "20251028" "20251029" "20251030"];
+renewal_wistar = ["20241007" "20241008" "20241009" "20241010"];
+
+%reduce table to just renewal 
+condense = contains(t.strain, 'wistar') + ismember(string(t.date), renewal_P);
+t = t(logical(condense), :);
+
+EtOH_days = ismember(string(t.date),  [renewal_wistar([1 3]) renewal_P([1 3])]);
+EtOH_pairs = contains(t.treatment, 'EtOH_EtOH'); 
+water_pairs = contains(t.treatment, 'Control_Control'); 
+mixed_pairs = (contains(t.treatment, 'EtOH_Control') | contains(t.treatment, 'Control_EtOH'));
+pairs = contains(t.treatment, '_');
+
+%% Grouping: ROT
+ROT_wistar = ["20241028" "20241029" "20241030" "20241031" "20241101"];
+ROT_P = ["20251117" "20251118" "20251119" "20251120" "20251121"];
+
+ROT_days_1 = ismember(string(t.date), [ROT_wistar([3]) ROT_P([3])]);
+ROT_days_2 = ismember(string(t.date), [ROT_wistar([5]) ROT_P([5])]);
+ROT_baseline_1 = ismember(string(t.date), [ROT_wistar([1]) ROT_P([1])]);
+ROT_baseline_2 = ismember(string(t.date), [ROT_wistar([2]) ROT_P([2])]);
+
 %% Grouping: strains and sex %% 
-P = contains(t.strain, "P");
-wistar = contains(t.strain, "Wistar");
-P_male = contains(t.strain, "P") & contains(t.sex, "M");
-P_female = contains(t.strain, "P") & contains(t.sex, "F");
-wistar_male = contains(t.strain, "Wistar") & contains(t.sex, "M");
-wistar_female = contains(t.strain, "Wistar") & contains(t.sex, "F");
+Ps = contains(t.strain, "P");
+wistars = contains(t.strain, "Wistar");
+males =  contains(t.sex, "M");
+females = contains(t.sex, "F");
+pairs = contains(t.treatment, '_');
+
 
 %% Grouping: EtOH vs Control
 EtOH = contains(t.treatment, "EtOH");
 H2O = contains(t.treatment, "Control");
 
-%% Grouping: baseline 
+%% Grouping: DD baseline 
 scentDays_wistar = ["20241016" "20241018" "20241023" "20241025"];
 scentDays_P = ["20251105" "20251107" "20251112" "20251114"];
 
 baseline = (ismember(string(t.date), ["20251104", "20251103", "20241015", "20241014"]));
+control_scentDays = contains(t.treatment, "Control") & ismember(string(t.date), [scentDays_wistar scentDays_P]);
 
 
 
@@ -146,69 +182,88 @@ thirdDay_water_scent = contains(t.treatment, "EtOH") & ismember(string(t.date), 
 fourthDay_EtOH_scent = contains(t.treatment, "EtOH") & ismember(string(t.date), [scentDays_wistar(4) scentDays_P(4)]) & ismember(t.subject, string(group1));
 fourthDay_water_scent = contains(t.treatment, "EtOH") & ismember(string(t.date), [scentDays_wistar(4) scentDays_P(4)]) & ismember(t.subject, string(group2));
 
-control_scentDays = contains(t.treatment, "Control") & ismember(string(t.date), [scentDays_wistar scentDays_P]);
+all_EtOH_scent = (firstDay_EtOH_scent | secondDay_EtOH_scent | thirdDay_EtOH_scent | fourthDay_EtOH_scent);
+all_water_scent = (firstDay_water_scent | secondDay_water_scent | thirdDay_water_scent | fourthDay_water_scent);
 
 %% Grouping: Final Analysis %%
-%(firstDay_water_scent | secondDay_water_scent | thirdDay_water_scent | fourthDay_water_scent)
+
+group1 = wistars & males & baseline;
+group2 = wistars & females & baseline;
+group3 = Ps & males & baseline;
+group4 = Ps & females & baseline;
+
+%% USV frequency Histogram %%
 
 
-group1 = wistar_male & baseline & H2O;
-group2 = wistar_male & control_scentDays & H2O;
-group3 = wistar_female & baseline & H2O;
-group4 = wistar_female & control_scentDays & H2O;
-group5 = P_male & baseline & H2O;
-group6 = P_male & control_scentDays & H2O;
-group7 = P_female & baseline & H2O;
-group8 = P_female & control_scentDays & H2O;
+group1 = t.sex == t.sex
+close(gcf)
+groups = {group1};
+%collect all the USVs frequencies 
+all_freq = [];
 
+%look through each row in the table. Pull out the frequencies for all the
+%calls within a certain time range. 
+for i = 1:numel(groups)
+    %only pull out calls for each group
+    specific_table = t(groups{i},:);
+    %only pull out calls in a certain time range
+    for m = 1:height(specific_table)
+        calls = specific_table.calls{m};
+        calls_inTimeRange = isInRange(calls.Box(:,1), RAP_sessionTime(1), RAP_sessionTime(end));
+        specific_table.calls(m) = {calls(calls_inTimeRange, :)};
+    end
+    all_calls = [];
+    %concatenate all call frequencies on top of each other
+    all_calls = cellfun(@(t)t.frequency, specific_table.calls, UniformOutput=false);
+    %convert to kHz
+    all_frequency = vertcat(all_calls{:});
 
-%% RAP Grouping 
+    % [x, f] = ksdensity(all_frequency);
+    % plot(f, x)
+    % hold on
 
-renewal_P = ["20251027" "20251028" "20251029" "20251030"];
-renewal_wistar = ["20241007", "20241008", "20241009", "20241010"];
-singles = t.treatment == "Control" | t.treatment == "EtOH";
+    %calls_inFrequency = isInRange(calls.frequency, 0, sad_threshold);
+end 
 
-%reduce table to just renewal 
-condense = contains(t.strain, 'wistar') + ismember(string(t.date), renewal_P);
-t = t(logical(condense), :);
+histogram(all_frequency/1000, FaceColor=[0.3 0.3 0.3], BinWidth = 1)
+%legend("Control", "EtOH");
+title("DD USV Frequency Histogram", FontSize=20, FontName='Arial',FontWeight="Bold")
+xline([30, 46])
+xlabel("Frequency (kHz)", FontSize=16, FontName='Arial', FontWeight="Bold")
+ylabel("Counts", FontSize=16, FontName='Arial', FontWeight="Bold")
+ax = gca
+ax.FontSize=30
 
-w_male = contains(t.sex, "M") & ~singles  & contains(t.strain, "wistar") ;
-w_female = contains(t.sex, "F") & ~singles & contains(t.strain, "wistar") ;
-p_male = contains(t.sex, "M") & contains(t.strain, "P") & ~singles;
-p_female = contains(t.sex, "F") & contains(t.strain, "P") & ~singles;
-
-wistar = contains(t.strain, "wistar") & ~singles;
-P = contains(t.strain, "P") & ~singles;
-
-Etoh = contains(t.treatment, 'EtOH_EtOH') & ismember(string(t.date), renewal_wistar([1 3]));
-water = ismember(t.treatment, {'EtOH_EtOH', 'EtOH_Control', 'Control_EtOH', 'Control_Control'}) & ismember(string(t.date), renewal_wistar([2 4]));
-mixed = (contains(t.treatment, 'EtOH_Control') | contains(t.treatment, 'Control_EtOH')) & ismember(string(t.date), renewal_wistar([1 3]));
-
-%% File Time Cutoff %% 
-
-%DD experiment 
-DD_sessionTime = -1*60:10:25*60;
-RAP_sessionTime = -1*60:10:60*60;
-
-%% Check USV frequency spread %%
-histogram(usv_freq(P, :)/1000, 'BinWidth', 1)
-hold on 
-title("DD USV frequency spread P")
-xlabel("Frequency (kHz)")
-ylim([0 4500])
-xline([36, 46])
-hold off
+xlim([20 100])
+% histogram(all_freq, 'BinWidth', 1)
+% hold on 
+% title("RAP USV frequency spread P males single")
+% xlabel("Frequency (kHz)")
+% ylim([0 800])
+%xline([34, 52])
+% %hold off
 
 %sad cutoff: 38 kHz
 %happy start: 46 kHz
+%% Counts in Frequency Bins %%
+
+freq_range = {[0 34], [34 52], [52 100]};
+
+data = {};
+for i = 1:numel(freq_range)
+    data{i} = calc_freqBins(t(group1, :), freq_range{i});
+    [x, f] = ksdensity(data{i}.frequency);
+    plot(x, f, LineWidth=2)
+end 
+
 %% USV Counts Graphing 
 
-groups = {group1, group2, group3, group4};
+groups = {group1, group2, group3, group4, group5, group6, group7, group8};
 group_data = {};
 jitterAmount = 0.5;
 
 %set some time threshold to keep calls within a certain time frame 
-time_frame = [-1*60, 22*60];
+time_frame = [-60 0];
 
 for i = 1:numel(groups)
     %pull out all of the calls for each member of each group of interest 
@@ -220,7 +275,7 @@ for i = 1:numel(groups)
         call_times = calls{m}.Box(:,1);
         %determine which calls fall within a time frame that you want to
         %look at 
-        keep = isInRange(call_times, time_frame(1), time_frame(2));
+        keep = isInRange(call_times, RAP_sessionTime(1), RAP_sessionTime(end));
         %only keep the calls within the time frame
         calls{m} = calls{m}(keep, :);
     end
@@ -236,10 +291,10 @@ for i = 1:numel(groups)
 end 
 
 xticks([1 2 3 4])
-ylim([0 1000])
-xticklabels({"Wistar Male Baseline", "Wistar Male EtOH Scent", "Wistar Female Baseline", "Wistar Female EtOH Scent"})
+%ylim([0 1000])
+xticklabels({"Wistar M", "Wistar F", "P M", "P F"})
 ylabel("USV counts")
-title("Baseline vs EtOH scent days, Ps both weeks")
+title("Sex and strain differences in anticipatory USVs")
 
 
 %% 1 vs 2 rats USVs
@@ -257,16 +312,17 @@ legend()
 
 %% USV rates over time %%
 
+close(gcf)
 figure(1); clf; hold on;
 x = (edges(1:end-1)+diff(edges)/2) / 60;
-shadedErrorBar(x, usv_rate(group7,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'blue', 'DisplayName', '2days Before'})
-shadedErrorBar(x, usv_rate(group8,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'green', 'DisplayName', 'Scent days'})
-%shadedErrorBar(x, usv_rate(mixed,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'red', 'DisplayName', 'water-EtOH'})
-%shadedErrorBar(x, usv_rate(p,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'black', 'DisplayName', 'p'})
+shadedErrorBar(x, usv_rate(group1,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'green', 'DisplayName', 'Baseline (monday)'})
+shadedErrorBar(x, usv_rate(group2,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'red', 'DisplayName', 'Baseline (tuesday)'})
+shadedErrorBar(x, usv_rate(group3, :), {avg_nan, sem}, 'lineProps',{ 'Color', 'blue', 'DisplayName', 'ROT day (wednesday)'})
+shadedErrorBar(x, usv_rate(group4,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'black', 'DisplayName', 'ROT day (Friday)'})
 xlabel("Time (minutes)")
 ylabel("USV Rate (Hz)")
-title("DD Scent Days both Weeks, Control animals, P females")
-ylim([0 1])
+title("DD ROT, P males")
+ylim([0 0.9])
 legend()
 
 %% Male vs Female
@@ -279,6 +335,35 @@ shadedErrorBar(x, usv_rate(~M,:), {avg_nan, sem}, 'lineProps',{ 'Color', 'green'
 xlabel("Time (minutes)")
 ylabel("USV Rate (Hz)")
 legend()
+
+%% USV frequency swarmchart %%
+
+close(gcf)
+groups = {group10,group11,group12};
+
+for i = 1:numel(groups)
+    %pull out all the frequency and time stamps for each group 
+    %all the calls for each animal in the group
+    grouped_calls = t.calls(groups{i});
+    %cycle through each animal and pull out the call times and associated
+    %frequency. Concatenate all the animals on top of each other. 
+    time_frequency_calls = [];
+    for m = 1:height(grouped_calls)
+        %find calls within the time range of RAP
+        tf = isInRange(grouped_calls{m}.Box(:, 1), DD_sessionTime(1), DD_sessionTime(end));
+        time_frequency_calls = [time_frequency_calls; [grouped_calls{m}.Box(tf, 1) grouped_calls{m}.frequency(tf, 1)]];
+    end 
+    %plot the time and call frequency on a swarmchart
+    swarmchart(time_frequency_calls(:,1), (time_frequency_calls(:,2)/1000));
+    ylim([0 90])
+    hold on
+end 
+
+legend("Control", "EtOH", "H2O");
+ylabel("Frequency (kHz)")
+xlabel("Time")
+title("P Females DD Scent Days")
+
 
 %%%%%%%%%%%%%%% LICK STUFF NEEDS ACCESS TO MED FILES %%%%%%%%%%%%%%%%%%%%%
 %% Load the med structs into the table
@@ -332,11 +417,7 @@ xlabel("Time (minutes)")
 legend()
 
 
-%%
-function tf = isInRange(x, lowerBound, upperBound)
-    tf = (x >= lowerBound) & (x <= upperBound);
-end
-
+%% 
 function counts = callNumber(callColumn)
     counts = [];
     for i = 1:size(callColumn)

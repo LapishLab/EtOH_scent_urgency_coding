@@ -1,0 +1,87 @@
+%% Convert calls table to have calls per each subject
+
+%pull out information so table has only one column(calls) that is different
+%per each rat 
+specific_table = t(:, {'subject','sex', 'strain','treatment','date', 'callNumbers'});
+
+%convert date to a useable form 
+date = dateshift(specific_table.date, 'start', 'day');
+specific_table.dateLabel = cellstr(datestr(date,'yyyy-mm-dd'));
+
+%table now has all call files for a subject. Call files are in different
+%cells 
+t_concat = unstack(specific_table, 'callNumbers', 'dateLabel', 'GroupingVariables', {'subject', 'sex', 'strain', 'treatment'}, 'AggregationFunction', @(x){x});
+
+%% Take the average number of calls 
+
+%Pull out just call number 
+call_number = t_concat(:, [5:end]);
+
+%concatenate data to
+
+
+
+
+
+%%
+%specify grouping information
+baseline = (ismember(string(t.date), ["20251104", "20251103", "20241015", "20241014"]));
+
+%create a vector with the subjects
+subject = string(unique(double(t.subject)));
+
+%columns to carry over
+keep_names = ["subject" "sex" "treatment" "strain"];
+keep_locations = ismember(t.Properties.VariableNames, keep_names);
+
+grouped_call_t = table(size=[0 6],VariableNames=[keep_names "file1_calls" "file2_calls"], VariableTypes=["string" "string" "string" "string" "cell" "cell"]);
+grouped_ratsInfo_t = table();
+
+%filter out only calls within a time range
+DD_sessionTime = -1*60:10:22*60;
+range = [DD_sessionTime(1), DD_sessionTime(7)];
+t = filter_calls_sessionTime(t, range);
+
+%for loop that moves through all the subjects, finds any call files for each
+%subject, and concatenates calls for each subject
+for i = 1:numel(subject)
+    %location for files for the same subject on baseline days 
+    match = find((t.subject == subject(i)) & baseline);
+    %check that there are two files for each subject. That rat will not be
+    %processed 
+    if numel(match) ~= 2
+        sprintf("Subject %s doesn't have two audio files", subject(i))
+        continue
+    end  
+    %grab identifying information for the rat for each calls 
+    info_file1 = t(match(1), keep_locations);
+    info_file2 = t(match(2), keep_locations);
+    %check if the identifying information for each audio file is the same.
+    %Skip this rat if they aren't the same 
+    if ~isequal(info_file1, info_file2)
+        sprintf("Audio files for %s are not from the same rat", subject(i))
+        continue
+    end 
+    %combine call information into a new table
+    [~, column_match] = ismember(grouped_call_t.Properties.VariableNames(1:end-2), info_file1.Properties.VariableNames);
+    grouped_call_t(end+1, 1:end-2) = info_file1(1, column_match);
+    % add call information
+    grouped_call_t.file1_calls(i) = t.calls(match(1));
+    grouped_call_t.file2_calls(i) = t.calls(match(2));
+end 
+
+%find average number of calls per subject 
+counts1 = arrayfun(@(x) height(grouped_call_t.file1_calls{x}), 1:height(grouped_call_t));
+counts2 = arrayfun(@(x) height(grouped_call_t.file2_calls{x}), 1:height(grouped_call_t));
+counts = mean([counts1' counts2'], 2);
+
+%% 
+histogram(counts,BinWidth=20);
+
+low = counts < 140;
+
+strain = contains(grouped_call_t.strain, "Wistar");
+sex = contains(grouped_call_t.sex, "M");
+reinforcer = contains(grouped_call_t.treatment, "Control");
+
+%scatter(counts1(strain' & sex'), discounting_K(strain & sex));
