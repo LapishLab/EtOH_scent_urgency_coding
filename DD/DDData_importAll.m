@@ -1,4 +1,4 @@
-function output = DDData_importAll(pat, dayNumbers, variables, opts)
+function [output] = DDData_importAll(pat, dayNumbers, variables, opts)
 
 %% Importing Delay Discounting Data from MedPC Files
 % This function imports delay disconting medPC files and compiles all of
@@ -24,7 +24,7 @@ arguments
     pat {mustBeText} % path to folder containing individual folders with medPC files for each day 
     dayNumbers {mustBeInteger} % day numbers specific to day folders in the dir_path that you want to pull out 
     variables {mustBeText} %vector of strings that specific which variables you want from the function 
-    opts.removeRats logical = false %false automatically assumes you don't need remove rats, if true then rats will be removed that didn't meet criteria 
+    opts.removeRats = []; %empty if not rats to remove. Remove rats who didn't meet learning criteria 
 end 
 
 
@@ -39,6 +39,7 @@ init_latency = {};
 choice_latency = {};
 init_levers = {};
 choice_levers = {};
+all_subjectNumbers = [];
 
 %% Fill variables with Data %%  
 %Change numbers in the for loop depending on how many days you have
@@ -47,24 +48,29 @@ for day = 1:numel(dayNumbers);
     %path name to the folder with all the MedPC files
     fullPath = [pat '\day' num2str(dayNumbers(day)) '\'];
     %import all of the files for each rat on each day
-    dayData = importMA_Batch(fullPath, output_path = "C:\Users\annar\OneDrive\Documents\IUSM\Dr. Lapish Lab\EtOH_scent_Urgency\072125_121225_Prat_Urgency\Codes\variables");
+    [dayData, subjectNumbers] = importMA_Batch(fullPath, save_data=false);
+    
     dates = matchingFileDates(dayData);
     allData{day} = dayData;
     %save the day and corresponding date to an overall vector so I can
     %check that the days and dates are aligning correctly 
     day_dates(day,:) = {dayNumbers(day), dates(1)};
 
-
     %create a for loop that finds the location of and removes rats who didn't make
-    %testing criteria. only needed for wistars
-    if opts.removeRats == true
-        for rat = 1:size(allData{day},1)
-            if allData{day}{rat}.Subject == 53 || allData{day}{rat}.Subject == 17|| allData{day}{rat}.Subject == 32 || allData{day}{rat}.Subject == 47
-                allData{day}{rat} = [];
-            end
-        end
+    % %testing criteria. only needed for wistars
+    if ~isempty(opts.removeRats)
+        %where the rats to remove are located in the data 
+        remove = ismember(subjectNumbers, opts.removeRats);
+        %remove data 
+        dayData = dayData(~remove);
+        %remove subject from the subject numbers
+        subjectNumbers = subjectNumbers(~remove); 
     end
 
+    %save subject numbers and allData to variables that stretch across
+    %multiple days
+    all_subjectNumbers([1:numel(subjectNumbers)], day) = subjectNumbers;
+    allData{day} = dayData;
 
     %determines which cells are empty. logical array with 1 for full cells and 0 for empty 
     emptyCells = ~cellfun('isempty', allData{day});
@@ -87,7 +93,7 @@ for day = 1:numel(dayNumbers);
     %add a for loop for creating a vector of iValues for each rat from
     %their choice trials
     for rat = 1:size(allData{day},1);
-         % -- Vectors for information only on Choice Trials -- %
+        % -- Vectors for information only on Choice Trials -- %
         % initial lever latencies, choice trials, delay lever latencies %
         %create new vector with iValues from only the choice trials for a singular rat. Index
         %into iValue O vector with choiceTrls to do this
@@ -142,7 +148,7 @@ for day = 1:numel(dayNumbers);
 end; 
 
 %% Determine output variables %%
-output = cell(1,numel(variables));
+output = cell(1,numel(variables)+1);
 
 if any(contains(variables, "all", 'IgnoreCase', true) & contains(variables, "ival", 'IgnoreCase', true))
     loc = contains(variables, "all", 'IgnoreCase', true) & contains(variables, "ival", 'IgnoreCase', true);
@@ -177,5 +183,5 @@ if any(contains(variables, "init", 'IgnoreCase', true) & contains(variables, "le
     output{loc_levers} = init_levers;
 end
 
-
-
+%always attach the subject numbers to the last location in output
+output{end} = all_subjectNumbers
