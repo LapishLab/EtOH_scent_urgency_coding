@@ -30,10 +30,6 @@ t = fix_DD_subjects(t, day, ind_group, old_subject, new_subject);
 
 %% Frequency Thresholds %%
 
-%RAP thresholds
-sad_threshold = 33*1000;
-happy_threshold = 52*1000;
-
 %DD thresholds 
 DD_threshold_happy = 46 * 1000;
 DD_threshold_sad = 30 * 1000;
@@ -42,7 +38,6 @@ DD_threshold_sad = 30 * 1000;
 %% File Time Cutoff %% 
  
 DD_sessionTime = -1*60:10:22*60;
-RAP_sessionTime = -1*60:10:60*60;
 
 %% DD: Remove Noise USVs 
 DD_removeUSV = [43*1000 45*1000;35*1000 36*1000];
@@ -117,19 +112,6 @@ end
 sem = @(x) std(x, 'omitnan')/sqrt(sum(~isnan(x(:,1))));
 avg_nan = @(x) mean(x, 'omitnan');
 
-%% Grouping: RAP renewal 
-renewal_P = ["20251027" "20251028" "20251029" "20251030"];
-renewal_wistar = ["20241007" "20241008" "20241009" "20241010"];
-
-%reduce table to just renewal 
-condense = contains(t.strain, 'wistar') + ismember(string(t.date), renewal_P);
-t = t(logical(condense), :);
-
-EtOH_days = ismember(string(t.date),  [renewal_wistar([1 3]) renewal_P([1 3])]);
-EtOH_pairs = contains(t.treatment, 'EtOH_EtOH'); 
-water_pairs = contains(t.treatment, 'Control_Control'); 
-mixed_pairs = (contains(t.treatment, 'EtOH_Control') | contains(t.treatment, 'Control_EtOH'));
-pairs = contains(t.treatment, '_');
 
 %% Grouping: ROT
 ROT_wistar = ["20241028" "20241029" "20241030" "20241031" "20241101"];
