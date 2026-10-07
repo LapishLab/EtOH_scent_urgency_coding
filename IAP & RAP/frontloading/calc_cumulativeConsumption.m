@@ -9,7 +9,7 @@ arguments
     RAP_lickTmSerMtx %licks across time
     RAP_totalLicks %table with total licks across all days 
     opts.cumulative_type {mustBeText} = "" %used to determine cumulative licks or g/kg over time, use licks or g/kg
-    opts.time {mustBeInteger} %cumulative time table, seconds or minutes. Input values are 60 or 3600
+    opts.time {mustBeInteger} = 1 %time interval. Will either be 1 for 1 second or 60 for 60 seconds  
 end 
 
 %% Organize the data in consumption (g/kg) per time unit %% 
@@ -18,52 +18,57 @@ end
 % variables needed: RAP_all, 
 
 %set the time variable in seconds or minutes 
-trlTime = [0:opts.time];
+trlTime = 0:opts.time:3600;
 
-if contains(opts.cumulative_type, "g/kg")
 %vectors holding details from the experiment
-    days = [1:size(RAP_all, 2)];
-    rats = [1:size(RAP_all, 1)];
+days = 1:size(RAP_all, 2);
+rats = 1:size(RAP_all, 1);
 
-    %create minute or second time bins by making a vector of 1:60 or 1:3600 
-    %trlTime = [0:3600];
-    %variable that will hold the data across all days
-    consumptionOverTime = {} ;
+%create minute or second time bins by making a vector of 1:60 or 1:3600
+%trlTime = [0:3600];
+%variable that will hold the data across all days
+consumptionOverTime = {} ;
 
-    %for loop that organizes the data for front loading by calculating the amount of ethanol 
-    %consumed during each second time bin. 
-    for day = 1:numel(days);
+%for loop that organizes the data for front loading by calculating the amount of ethanol
+%consumed during each second time bin.
+for day = 1:numel(days)
     %variable that will hold the data for each day
-        consBin = [];
-        for rat = 1:numel(rats);
-            %pull out the individual data for each rat on each day
-            lickTms = RAP_lickTmSerMtx{day}{rat};
-            %calculate the number of licks in each second time bin
-            binLicks = cumsum(histcounts(lickTms,trlTime));
-            %divide each time bin by the total number of licks to get the
-            %percentage of licks in each time bin
-            percLick = binLicks./numel(lickTms);
-            %multiple the lick per bin percentage by total consumption to find the amount
-            %consumed during each second bin and add it to the array. Then
-            %find the cumulative sum of the data
-            indConsBin = percLick.*table2array(RAP_all(rat,day));
-            consBin = [consBin;indConsBin];
-        end;
-        consumptionOverTime{day} = consBin;
-    end; 
-elseif contains(opts.cumulative_type, "lick")
-
-    %% Organize the data in licks per time unit %% 
-    % i is the day by cycling through lick time series matrix. Cumulative licks
-    % across the time series will be calculated for each rat on each day 
-    for i=1:size(RAP_lickTmSerMtx,2)
-        hld = RAP_lickTmSerMtx{i};
-        binLick = [];
-        binLick = [binLick;cell2mat(cellfun(@(x) cumsum(histcounts(x,trlTime)), hld, 'UniformOutput',false))];
-        %find where there are NaNs in hld and make sure that those in
-        %binLick are a vector of NaNs
-        idx = cellfun(@(x) any(isnan(x)), hld);
-        binLick(idx,:) = NaN;
-        consumptionOverTime{i} = binLick;
+    consBin = [];
+    licksBin = [];
+    for rat = 1:numel(rats)
+        %pull out the individual data for each rat on each day
+        lickTms = RAP_lickTmSerMtx{day}{rat};
+        %calculate the number of licks in each second time bin
+        binLicks = cumsum(histcounts(lickTms,trlTime));
+        %divide each time bin by the total number of licks to get the
+        %percentage of licks in each time bin
+        percLick = binLicks./numel(lickTms);
+        %multiply the lick per bin percentage by total consumption to find the amount
+        %consumed during each second bin and add it to the array. Then
+        %find the cumulative sum of the data.
+        indConsBin = percLick.*table2array(RAP_all(rat,day));
+        consBin = [consBin;indConsBin];
+        licksBin = [licksBin;binLicks];
     end
-end 
+    if contains(opts.cumulative_type, "g/kg")
+        consumptionOverTime{day} = consBin;
+    elseif contains(opts.cumulative_type, "lick")
+        consumptionOverTime{day} = licksBin;
+    end
+end
+% elseif contains(opts.cumulative_type, "lick")
+% 
+%     %% Organize the data in licks per time unit %% 
+%     % i is the day by cycling through lick time series matrix. Cumulative licks
+%     % across the time series will be calculated for each rat on each day 
+%     for i=1:size(RAP_lickTmSerMtx,2)
+%         hld = RAP_lickTmSerMtx{i};
+%         binLick = [];
+%         binLick = [binLick;cell2mat(cellfun(@(x) cumsum(histcounts(x,trlTime)), hld, 'UniformOutput',false))];
+%         %find where there are NaNs in hld and make sure that those in
+%         %binLick are a vector of NaNs
+%         idx = cellfun(@(x) any(isnan(x)), hld);
+%         binLick(idx,:) = NaN;
+%         consumptionOverTime{i} = binLick;
+%     end
+% end 
