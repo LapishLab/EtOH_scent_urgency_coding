@@ -173,9 +173,9 @@ end;
 %% Organize output information %%
 
 %Names of possible output variables 
-variable_names = ["allData" "totLickMtx" "lickTmSerMtx" "sideMtx" "subNumMtx" "checkLicks"];
+variable_names = ["allData" "totLickMtx" "lickTmSerMtx" "sideMtx" "subNumMtx"];
 %array to hold all possible output variables in same order as name variable
-variables = {allData, totLickMtx, lickTmSerMtx, sideMtx, subNumMtx, checkLicks};
+variables = {allData, totLickMtx, lickTmSerMtx, sideMtx, subNumMtx};
 
 out = {};
 
