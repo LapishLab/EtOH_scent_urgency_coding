@@ -4,7 +4,7 @@
 IAP_high = 3.5;
 RAP_high = 0.8;
 IAP_medium = 1;
-RAP_medium = 0.4;
+RAP_medium = 0.35;
 
 %add new column to rats info column for drinking classification
 ratsInfo.drinkClass = strings(size(ratsInfo, 1), 1);
